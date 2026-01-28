@@ -1,21 +1,27 @@
 const { app, BrowserWindow, shell } = require('electron');
+const { autoUpdater } = require("electron-updater");
 const path = require('path');
+const log = require("electron-log");
+
+// 1. Loglama Ayarları (Hata takibi için)
+autoUpdater.logger = log;
+autoUpdater.logger.transports.file.level = "info";
 
 function createWindow() {
-    // 1. Pencere Ayarları
+    // 2. Pencere Ayarları
     const win = new BrowserWindow({
         width: 1280,
         height: 800,
         title: "Orkun Lounge",
-        // icon: path.join(__dirname, 'public/favicon.ico'), // İleride ikon ekleyince burayı açarsın
+        // icon: path.join(__dirname, 'public/favicon.ico'), 
         webPreferences: {
-            nodeIntegration: false, // Güvenlik için kapalı tutuyoruz
+            nodeIntegration: false,
             contextIsolation: true,
-            // 2. Ses ve Video İzinlerini Otomatik Onayla (Discord gibi)
+            // Ses ve Video İzinlerini Otomatik Onayla
             permissionRequestHandler: (webContents, permission, callback) => {
                 const allowedPermissions = ['media', 'audioCapture', 'videoCapture'];
                 if (allowedPermissions.includes(permission)) {
-                    callback(true); // Kullanıcıya sormadan izin ver
+                    callback(true); 
                 } else {
                     callback(false);
                 }
@@ -23,26 +29,48 @@ function createWindow() {
         }
     });
 
-    // 3. Menü Çubuğunu Gizle (Tam modern görünüm için)
+    // 3. Menü Çubuğunu Gizle
     win.setMenuBarVisibility(false);
 
-    // 4. Hangi Adrese Bağlanacak?
-    // Geliştirme yaparken 'http://localhost:4444' adresine,
-    // Uygulama bittiğinde 'https://orkunlounge.onrender.com' adresine bağlanacak.
+    // 4. Bağlantı Adresi
     const appUrl = 'https://orkunlounge.onrender.com'; 
-    // CANLIYA ALIRKEN ÜSTTEKİ SATIRI SİLİP BUNU AÇACAKSIN:
-    // const appUrl = 'https://orkunlounge.onrender.com';
-
     win.loadURL(appUrl);
 
-    // Linklere tıklayınca uygulamanın içinde değil, varsayılan tarayıcıda açılması için
+    // Dış linkleri varsayılan tarayıcıda aç
     win.webContents.setWindowOpenHandler(({ url }) => {
         shell.openExternal(url);
         return { action: 'deny' };
     });
+
+    // --- GÜNCELLEME KONTROLÜ BAŞLANGICI ---
+    // Pencere açılıp içerik göründüğünde güncelleme kontrolü yap
+    win.once('ready-to-show', () => {
+        // Hem kontrol eder hem de kullanıcıya bildirim gösterir (Windows notification)
+        autoUpdater.checkForUpdatesAndNotify();
+    });
 }
 
-// Electron hazır olduğunda pencereyi aç
+// --- OTOMATİK GÜNCELLEME OLAYLARI ---
+
+// Güncelleme bulundu
+autoUpdater.on('update-available', () => {
+    log.info('Yeni bir güncelleme bulundu, indiriliyor...');
+});
+
+// Güncelleme indirildi, kuruluma geç
+autoUpdater.on('update-downloaded', () => {
+    log.info('Güncelleme indi. Uygulama yeniden başlatılıyor...');
+    // Kullanıcıya sormadan kur ve yeniden başlat (Discord tarzı)
+    autoUpdater.quitAndInstall();
+});
+
+// Güncelleme hatası olursa
+autoUpdater.on('error', (err) => {
+    log.error('Güncelleme hatası:', err);
+});
+
+// --- UYGULAMA YAŞAM DÖNGÜSÜ ---
+
 app.whenReady().then(() => {
     createWindow();
 
@@ -51,7 +79,6 @@ app.whenReady().then(() => {
     });
 });
 
-// Tüm pencereler kapandığında uygulamadan çık (Mac hariç standart davranış)
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') app.quit();
 });
