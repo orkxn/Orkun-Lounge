@@ -4,7 +4,7 @@ const mysql = require('mysql2');
 const session = require('express-session');
 const http = require('http');
 const { Server } = require('socket.io');
-
+require('dotenv').config();
 
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -29,19 +29,16 @@ app.use(session({
 }));
 
 const dbase = mysql.createConnection({
-    host: process.env.DB_HOST,      
-    user: process.env.DB_USER,      
-    password: process.env.DB_PASSWORD, 
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: 10001,
-    ssl: {
-        // Bu ayar sunucunun sertifikasını otomatik kabul eder
-        rejectUnauthorized: false 
-    },
-    connectTimeout: 60000,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+    port: process.env.DB_PORT || 3306,
+    // EĞER host localhost değilse SSL kullan, localhost ise SSL'i kapat
+    ssl: (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') 
+         ? { rejectUnauthorized: false } 
+         : false,
+    connectTimeout: 60000
 });
 
 dbase.connect(err => {
