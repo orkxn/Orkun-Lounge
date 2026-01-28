@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Orkun Lounge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- GENEL AYARLAR --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #050505;
+            background-image: radial-gradient(circle at center, #2a003b 0%, #000000 70%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        /* --- DASHBOARD KUTUSU --- */
+        .dashboard-box {
+            background-color: #0a0a0a;
+            padding: 60px 40px;
+            border-radius: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 
+                0 0 20px rgba(205, 0, 255, 0.4),
+                0 0 40px rgba(205, 0, 255, 0.4),
+                0 0 80px rgba(205, 0, 255, 0.4);
+            border: 1px solid #2a003b;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #cd00ff;
+        }
+
+        .user-welcome {
+            font-size: 24px;
+            color: #cd00ff;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        p {
+            color: #b0b0b0;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        /* --- BUTONLAR --- */
+        .btn-container {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .action-btn {
+            background: transparent;
+            color: #fff;
+            border: 1px solid #cd00ff;
+            padding: 12px 25px;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px #cd00ff;
+        }
+
+        .action-btn:hover {
+            background: #cd00ff;
+            box-shadow: 0 0 20px #cd00ff;
+            transform: translateY(-3px);
+        }
+
+        .logout-btn {
+            border-color: #ff0044;
+            color: #ff0044;
+            text-shadow: 0 0 5px #ff0044;
+        }
+
+        .logout-btn:hover {
+            background: #ff0044;
+            box-shadow: 0 0 20px #ff0044;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-box">
+        <h1>Welcome Back!</h1>
+        <div id="username-display" class="user-welcome">Loading...</div>
+        
+        <p>You have entered the system. Enjoy it!</p>
+
+        <div class="btn-container">
+            <a href="/chat" class="action-btn">Lounge Chat</a>
+            <a href="/" class="action-btn">Homepage</a>
+            <a href="/logout" class="action-btn logout-btn">Logout</a>
+        </div>
+    </div>
+
+    <script>
+        // Sayfa yüklendiğinde sunucudan kullanıcı bilgilerini isteyelim
+        fetch('/api/userinfo')
+            .then(response => {
+                if (!response.ok) throw new Error("Unauthorized");
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('username-display').textContent = data.username;
+            })
+            .catch(err => {
+                console.error("Hata:", err);
+                // Eğer hata varsa (oturum bitmişse vb.) giriş sayfasına at
+                window.location.href = "/login";
+            });
+    </script>
+
+</body>
+</html>

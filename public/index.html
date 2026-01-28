@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Orkun Lounge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- GENEL AYARLAR (Login sayfasıyla aynı) --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #050505;
+            /* Aynı mor gradyan arka plan */
+            background-image: radial-gradient(circle at center, #2a003b 0%, #000000 70%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        /* --- ANA KUTU (Login Box ile aynı stil) --- */
+        .welcome-box {
+            background-color: #0a0a0a;
+            padding: 60px 40px;
+            border-radius: 30px;
+            width: 100%;
+            max-width: 500px; /* Biraz daha geniş olabilir */
+            text-align: center;
+            /* Aynı Mor Neon Gölge */
+            box-shadow: 
+                0 0 20px rgba(205, 0, 255, 0.4),
+                0 0 40px rgba(205, 0, 255, 0.4),
+                0 0 80px rgba(205, 0, 255, 0.4),
+                0 0 120px rgba(205, 0, 255, 0.2);
+            border: 1px solid #2a003b;
+            animation: fadeIn 1.5s ease-in-out; /* Sayfa açılış efekti */
+        }
+
+        /* --- BAŞLIK --- */
+        .welcome-box h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+            text-shadow: 0 0 15px rgba(205, 0, 255, 0.6); /* Başlık parlaması */
+        }
+
+        .welcome-box h1 span {
+            color: #cd00ff; /* "Orkun Lounge" kısmını mor yapalım */
+        }
+
+        /* --- WHOAMI KISMI --- */
+        .whoami-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05); /* Çok hafif şeffaf beyaz */
+            border-radius: 15px;
+            border-left: 3px solid #cd00ff; /* Sol tarafa mor çizgi */
+            text-align: left;
+        }
+
+        .whoami-title {
+            font-size: 12px;
+            color: #cd00ff;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .whoami-text {
+            font-size: 14px;
+            color: #e0e0e0;
+            font-weight: 300;
+            line-height: 1.6;
+        }
+
+        /* --- GİRİŞ LİNKİ (Buton Görünümlü) --- */
+        .login-link {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none; /* Alt çizgiyi kaldır */
+            background: transparent;
+            color: #cd00ff;
+            border: 2px solid #cd00ff; /* Çerçeve ekledik daha belirgin olsun diye */
+            border-radius: 50px; /* Yuvarlak buton */
+            padding: 12px 40px;
+            font-weight: 700;
+            font-size: 16px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(205, 0, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .login-link:hover {
+            background-color: #cd00ff;
+            color: #000; /* Hover olunca yazı siyah olsun */
+            box-shadow: 0 0 30px rgba(205, 0, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* Sayfa yüklenirken yumuşak giriş animasyonu */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Butonları yan yana veya alt alta hizalamak için */
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* Dashboard butonuna özel stil (isteğe bağlı) */
+        .dashboard-btn {
+            border-color: #00ff44; /* Dashboard için yeşil bir hava verebiliriz */
+            color: #00ff44;
+            box-shadow: 0 0 10px rgba(0, 255, 68, 0.3);
+        }
+
+        .dashboard-btn:hover {
+            background-color: #00ff44;
+            box-shadow: 0 0 30px rgba(0, 255, 68, 0.6);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="welcome-box">
+        <h1 id="welcomeHeader">Welcome to<br><span>Orkun Lounge</span></h1>
+
+        <div class="whoami-container">
+            <div class="whoami-title">> WHOAMI</div>
+            <div class="whoami-text">
+                I'm Orkun, a Web Developer and Cyber Security Lover.<br>
+                This is where you can feel free and chill.<br>
+                System Status: <span style="color:#00ff44">Online</span>
+            </div>
+        </div>
+
+        <a href="/login" id="loginBtn" class="login-link">LOGIN PAGE</a>
+
+        <a href="/dashboard" id="dashBtn" class="login-link dashboard-btn" style="display: none;">DASHBOARD</a>
+    </div>
+
+    <script>
+        fetch('/api/userinfo')
+        .then(response => {
+            if (response.ok) {
+                // 1. ÖNCE: Yanıtı JSON olarak işle
+                return response.json(); 
+            } else {
+                // Eğer giriş yoksa zinciri burada kır
+                throw new Error("Giriş yapılmamış");
+            }
+        })
+        .then(data => {
+            // 2. SONRA: Veriyi (data) burada kullanabilirsin
+            // textContent yerine innerHTML kullanıyoruz çünkü içinde <span> var
+            document.getElementById('welcomeHeader').innerHTML = `Welcome, <span>${data.username}</span>`;
+            
+            // Giriş yapılmışsa butonları ayarla
+            document.getElementById('loginBtn').style.display = 'none';
+            document.getElementById('dashBtn').style.display = 'inline-block';
+        })
+        .catch(err => {
+            console.log("Oturum yok veya hata oluştu:", err.message);
+            // Hata durumunda (veya giriş yoksa) varsayılan görünüm
+            document.getElementById('loginBtn').style.display = 'inline-block';
+            document.getElementById('dashBtn').style.display = 'none';
+        });
+    </script>
+
+</body>
+</html>

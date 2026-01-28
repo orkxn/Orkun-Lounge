@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lounge Chat | Orkun Lounge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background-color: #050505;
+            background-image: radial-gradient(circle at center, #2a003b 0%, #000000 70%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            padding: 10px;
+        }
+
+        /* --- ANA KONTEYNER (EKRANI KAPLAYAN YAPI) --- */
+        .chat-wrapper {
+            background-color: rgba(10, 10, 10, 0.95);
+            width: 95%; /* Ekranın %95'ini kaplar */
+            max-width: 1400px;
+            height: 90vh; /* Ekran yüksekliğinin %90'ı */
+            display: flex;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(205, 0, 255, 0.2);
+            border: 1px solid #2a003b;
+        }
+
+        /* --- SOL PANEL: ONLINE LİSTESİ --- */
+        .online-sidebar {
+            width: 250px;
+            background: rgba(20, 20, 20, 0.8);
+            border-right: 1px solid rgba(205, 0, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .online-sidebar h3 {
+            font-size: 16px;
+            color: #cd00ff;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .user-list {
+            list-style: none;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .online-dot {
+            width: 8px; height: 8px;
+            background: #00ff44;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff44;
+        }
+
+        /* --- SAĞ PANEL: CHAT ALANI --- */
+        .main-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 30px;
+            background: transparent;
+        }
+
+        .chat-header {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- MESAJLAR --- */
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 15px;
+            margin-bottom: 25px;
+        }
+
+        .message-item {
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 15px;
+            padding: 12px 18px;
+            border-radius: 15px;
+            max-width: 80%;
+            border-left: 3px solid #cd00ff;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Mesaj Yazma Alanı Konteynırı */
+        .input-area {
+            display: flex;
+            align-items: center; /* Buton ve yazıyı hizalar */
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(205, 0, 255, 0.3);
+        }
+
+        /* Garip görünen textarea'yı şıklaştıralım */
+        #messageInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            resize: none; /* Köşedeki çekme işaretini kaldırır */
+            padding: 5px 0;
+            max-height: 80px;
+            overflow-y: auto; /* Çok uzarsa scroll çıksın */
+        }
+
+        /* Scrollbar'ı gizleyelim veya şıklaştıralım */
+        #messageInput::-webkit-scrollbar {
+            width: 0px;
+        }
+
+        .send-btn {
+            background: #cd00ff;
+            color: #000;
+            border: none;
+            padding: 0 30px;
+            border-radius: 50px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .send-btn:hover {
+            box-shadow: 0 0 20px rgba(205, 0, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-wrapper">
+        <div class="online-sidebar">
+            <h3>Online Users</h3>
+            <ul class="user-list" id="userList">
+                <li class="user-item"><span class="online-dot"></span> Orkun (Sen)</li>
+            </ul>
+        </div>
+
+    <div class="voice-controls">
+    <h3>Voice Channel</h3>
+    <button id="voiceBtn" class="send-btn" style="width: 100%;">JOIN VOICE</button>
+    
+    <div id="voiceActions" style="display: none; margin-top: 15px; display: flex; justify-content: space-around; background: #111; padding: 10px; border-radius: 15px; border: 1px solid #2a003b;">
+        <button id="muteBtn" title="Mute/Unmute" style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎤</button>
+        <button id="deafenBtn" title="Deafen/Undeafen" style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎧</button>
+        <button id="leaveBtn" title="Leave Voice" style="background:none; border:none; cursor:pointer; color:#ff0044; font-size:18px;">❌</button>
+    </div>
+    </div>    
+
+        <div class="main-chat">
+            <div class="chat-header">
+                <h2>Lounge <span>Chat</span></h2>
+                <span id="status" style="color: #00ff44; font-size: 12px;">● Connected</span>
+            </div>
+
+            <div id="messages"></div>
+
+            <div class="input-area">
+                <textarea id="messageInput" placeholder="Write something..." autocomplete="off" rows="1"></textarea>
+                <button class="send-btn" onclick="sendMessage()">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script>
+        // --- 1. TANIMLAMALAR (EN BAŞTA OLMALI) ---
+        const socket = io();
+        
+        
+        const peer = new Peer(); 
+        
+        let currentUsername = "";
+        let myStream;
+        let isMuted = false;
+        let isDeafened = false;
+        const peers = {}; 
+
+        // --- 2. KİMLİK TESPİTİ ---
+        fetch('/api/userinfo')
+            .then(res => res.json())
+            .then(data => {
+                currentUsername = data.username;
+                socket.emit('user_joined', currentUsername);
+            })
+            .catch(err => console.error("Kullanıcı bilgisi alınamadı:", err));
+
+        // --- 3. PEERJS BAĞLANTISI ---
+        peer.on('open', (id) => {
+            console.log('✅ PeerJS Bağlandı. ID:', id);
+        });
+        
+        peer.on('error', (err) => {
+            console.error('❌ PeerJS Hatası:', err);
+        });
+
+        // --- 4. MESAJLAŞMA (TEXT CHAT) ---
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            if (input.value.trim() && currentUsername) {
+                socket.emit('chat_message', { user: currentUsername, text: input.value });
+                input.value = '';
+            }
+        }
+
+        document.getElementById('messageInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        socket.on('new_message', (data) => {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-item';
+            const formattedText = data.text.replace(/\n/g, '<br>');
+            msgDiv.innerHTML = `<strong>${data.user}</strong><br>${formattedText}`;
+            const container = document.getElementById('messages');
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+        });
+
+        socket.on('update_user_list', (users) => {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.className = 'user-item';
+                const isMe = user === currentUsername ? ' (Sen)' : '';
+                li.innerHTML = `<span class="online-dot"></span> ${user}${isMe}`;
+                userList.appendChild(li);
+            });
+        });
+
+        // --- 5. SESLİ SOHBET (VOICE CHAT) ---
+        
+        // A) Join Voice Butonu (GÜNCELLENMİŞ HALİ)
+        const voiceBtn = document.getElementById('voiceBtn');
+        if (voiceBtn) {
+            voiceBtn.addEventListener('click', async () => {
+                if (!peer.id) {
+                    alert("Bağlantı hazırlanıyor, lütfen bekleyin...");
+                    return;
+                }
+
+                try {
+                    // Mikrofon izni iste
+                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    // --- BURASI DEĞİŞTİ ---
+                    // Butonu gizlemek yerine stilini ve yazısını değiştiriyoruz
+                    voiceBtn.innerText = "ON VOICE";
+                    voiceBtn.style.color = "#00ff44";       // Yeşil yazı
+                    voiceBtn.style.borderColor = "#00ff44"; // Yeşil çerçeve
+                    voiceBtn.style.boxShadow = "0 0 15px rgba(0, 255, 68, 0.4)"; // Yeşil neon parlaması
+                    voiceBtn.disabled = true;               // Tekrar tıklanmasın
+                    voiceBtn.style.cursor = "default";
+
+                    // Kontrol panelini (Mute/Leave) aç
+                    document.getElementById('voiceActions').style.display = 'flex';
+                    // ----------------------
+
+                    // Sunucuya bildir
+                    socket.emit('join-voice', { peerId: peer.id, username: currentUsername });
+
+                } catch (err) {
+                    console.error("Mikrofon hatası:", err);
+                    alert("Mikrofona erişilemedi! İzin verdiğinizden emin olun.");
+                }
+            });
+        }
+
+        // B) Biri Bizi Ararsa (Cevaplama)
+        peer.on('call', (call) => {
+            call.answer(myStream);
+            const audio = document.createElement('audio');
+            
+            call.on('stream', (userStream) => {
+                addAudioStream(audio, userStream);
+                if (isDeafened) audio.muted = true;
+            });
+            peers[call.peer] = call;
+        });
+
+        // C) Yeni Biri Gelirse (Biz Onu Arıyoruz)
+        socket.on('user-joined-voice', (data) => {
+            if (data.peerId === peer.id) return; 
+
+            const call = peer.call(data.peerId, myStream);
+            const audio = document.createElement('audio');
+            
+            call.on('stream', (userStream) => {
+                addAudioStream(audio, userStream);
+                if (isDeafened) audio.muted = true;
+            });
+            peers[data.peerId] = call;
+        });
+
+        // --- 6. SES KONTROLLERİ ---
+
+        // Mute (Mikrofonu Kapat)
+        document.getElementById('muteBtn').addEventListener('click', () => {
+            if (!myStream) return;
+            isMuted = !isMuted;
+            myStream.getAudioTracks()[0].enabled = !isMuted;
+            
+            const btn = document.getElementById('muteBtn');
+            btn.innerText = isMuted ? "🔇" : "🎤";
+            btn.style.color = isMuted ? "#ff0044" : "#cd00ff";
+        });
+
+        // Deafen (Sesi Kapat)
+        document.getElementById('deafenBtn').addEventListener('click', () => {
+            isDeafened = !isDeafened;
+            document.querySelectorAll('#remote-audios audio').forEach(audio => audio.muted = isDeafened);
+            
+            const btn = document.getElementById('deafenBtn');
+            btn.innerText = isDeafened ? "🚫" : "🎧";
+            btn.style.color = isDeafened ? "#ff0044" : "#cd00ff";
+        });
+
+        // Leave (Ayrıl) GÜNCELLENMİŞ HALİ
+        document.getElementById('leaveBtn').addEventListener('click', () => {
+            // 1. Bağlantıları kes
+            if (myStream) myStream.getTracks().forEach(track => track.stop());
+            Object.values(peers).forEach(call => call.close());
+            
+            // 2. Butonu ESKİ HALİNE getir (Mor yap)
+            const vBtn = document.getElementById('voiceBtn');
+            vBtn.innerText = "JOIN VOICE";
+            vBtn.style.color = "";       // CSS'teki orijinal rengine döner
+            vBtn.style.borderColor = ""; // CSS'teki orijinal rengine döner
+            vBtn.style.boxShadow = "";   // Parlamayı kaldır
+            vBtn.disabled = false;       // Tekrar tıklanabilir yap
+            vBtn.style.cursor = "pointer";
+
+            // 3. Kontrol panelini gizle
+            document.getElementById('voiceActions').style.display = 'none';
+            
+            // 4. Sayfayı yenile (En temiz çıkış yöntemi)
+            location.reload(); 
+        });
+
+        function addAudioStream(audio, stream) {
+            audio.srcObject = stream;
+            audio.addEventListener('loadedmetadata', () => {
+                audio.play();
+            });
+            const container = document.getElementById('remote-audios');
+            if(container) container.append(audio);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Neon Purple</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- MEVCUT CSS KODLARININ AYNISI --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        body {
+            background-color: #050505;
+            background-image: radial-gradient(circle at center, #2a003b 0%, #000000 70%);
+            height: 100vh; display: flex; justify-content: center; align-items: center; color: #ffffff; padding: 20px;
+        }
+        .login-box {
+            background-color: #0a0a0a; padding: 50px 40px; border-radius: 30px; width: 100%; max-width: 400px; text-align: center;
+            box-shadow: 0 0 20px rgba(205, 0, 255, 0.4), 0 0 40px rgba(205, 0, 255, 0.4), 0 0 80px rgba(205, 0, 255, 0.4), 0 0 120px rgba(205, 0, 255, 0.2);
+            border: 1px solid #2a003b;
+        }
+        .login-box h2 { margin-bottom: 40px; font-weight: 700; font-size: 28px; text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); }
+        .input-group { text-align: left; margin-bottom: 30px; position: relative; }
+        .input-group label { display: inline-block; margin-bottom: 8px; font-size: 14px; color: #e0e0e0; transition: color 0.3s ease; }
+        @keyframes pop-label { 0% { transform: scale(1); } 50% { transform: scale(1.15); color: #cd00ff; } 100% { transform: scale(1); color: #e0e0e0; } }
+        .input-group:focus-within label { animation: pop-label 0.4s ease-in-out; }
+        .input-group input { width: 100%; background: transparent; border: none; border-bottom: 2px solid #555; padding: 10px 0; color: #fff; font-size: 16px; outline: none; transition: border-color 0.3s; }
+        .input-group input:focus { border-bottom-color: #cd00ff; }
+        .submit-btn { background: transparent; color: #cd00ff; border: none; padding: 15px 30px; font-weight: 700; font-size: 16px; letter-spacing: 2px; cursor: pointer; text-transform: uppercase; text-shadow: 0 0 10px #cd00ff; transition: all 0.3s ease; width: 100%; }
+        .submit-btn:hover { text-shadow: 0 0 20px #cd00ff, 0 0 30px #cd00ff; transform: scale(1.05); }
+        
+        /* --- ALTTAKİ LİNK İÇİN EKSTRA CSS --- */
+        .switch-page-link { margin-top: 25px; font-size: 14px; color: #e0e0e0; }
+        .switch-page-link a { color: #cd00ff; text-decoration: none; font-weight: 600; transition: all 0.3s; }
+        .switch-page-link a:hover { text-shadow: 0 0 10px #cd00ff; }
+    </style>
+</head>
+<body>
+
+    <div class="login-box">
+        <h2>Sign Up</h2>
+        <form action="/signup" method="POST">
+            <div class="input-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="input-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">SIGN UP</button>
+
+            <div class="switch-page-link">
+                Already have an account? <a href="/login">Login here</a>
+            </div>
+        </form>
+    </div>
+
+</body>
+</html>
