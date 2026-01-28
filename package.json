@@ -2,10 +2,12 @@
   "name": "orkun-lounge",
   "version": "1.0.0",
   "description": "Orkun Lounge Chat & Voice App",
-  "main": "server.js",
+  "main": "main.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "electron": "electron .",
+    "dist": "electron-builder"
   },
   "keywords": [
     "nodejs",
@@ -23,5 +25,40 @@
     "mysql2": "^3.6.5",
     "peerjs": "^1.5.2",
     "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0"
+  },
+  "build": {
+    "appId": "com.orkun.lounge",
+    "productName": "Orkun Lounge",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!dist/*",
+      "!node_modules/*",
+      "!.env"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/favicon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Orkun Lounge"
+    }
   }
 }
