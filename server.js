@@ -94,7 +94,7 @@ app.get("/login", (req,res) => {
 app.post("/login", (req,res) => {
     const {username, password} = req.body;
     dbase.query(
-        "SELECT * FROM users WHERE username = ?",
+        "SELECT * FROM users WHERE BINARY username = ?",
         [username],
         (err, results) => {
             if(err) return console.log("Database login connection error.");
