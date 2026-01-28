@@ -68,7 +68,7 @@ io.on('connection', (socket) => {
         io.emit('new_message', data);
     });
 
-    // --- SESLİ SOHBET OLAYLARI (BURASI KRİTİK) ---
+    // -- SESLİ SOHBET OLAYLARI (BURASI KRİTİK) --
 
     // 3. BİRİSİ SESE GİRDİĞİNDE
     socket.on('join-voice', (data) => {
