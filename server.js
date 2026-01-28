@@ -37,7 +37,11 @@ const dbase = mysql.createConnection({
     ssl: {
         // Bu ayar sunucunun sertifikasını otomatik kabul eder
         rejectUnauthorized: false 
-    }
+    },
+    connectTimeout: 60000,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
 });
 
 dbase.connect(err => {
