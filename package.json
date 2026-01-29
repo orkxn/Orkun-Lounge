@@ -1,6 +1,6 @@
 {
   "name": "orkun-lounge",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Orkun Lounge Chat & Voice App",
   "main": "main.js",
   "scripts": {
