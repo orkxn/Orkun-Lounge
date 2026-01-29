@@ -262,290 +262,246 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
-        // --- 1. TANIMLAMALAR (EN BAŞTA OLMALI) ---
-        const socket = io();
-        
-        
-        const peer = new Peer(); 
-        
-        let currentUsername = "";
-        let myStream;
-        let isMuted = false;
-        let isDeafened = false;
-        const peers = {}; 
-
-        // --- 2. KİMLİK TESPİTİ ---
-        fetch('/api/userinfo')
-            .then(res => res.json())
-            .then(data => {
-                currentUsername = data.username;
-                socket.emit('user_joined', currentUsername);
-            })
-            .catch(err => console.error("User info couldn.'t gathered.", err));
-
-        // --- 3. PEERJS BAĞLANTISI ---
-        peer.on('open', (id) => {
-            console.log('✅ PeerJS Connected. ID:', id);
-        });
-        
-        peer.on('error', (err) => {
-            console.error('❌ PeerJS Error:', err);
-        });
-
-        // --- 4. MESAJLAŞMA (TEXT CHAT) ---
-        function sendMessage() {
-            const input = document.getElementById('messageInput');
-            if (input.value.trim() && currentUsername) {
-                socket.emit('chat_message', { user: currentUsername, text: input.value });
-                input.value = '';
-            }
-        }
-
-        document.getElementById('messageInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        socket.on('new_message', (data) => {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message-item';
-            const formattedText = data.text.replace(/\n/g, '<br>');
-            msgDiv.innerHTML = `<strong>${data.user}</strong><br>${formattedText}`;
-            const container = document.getElementById('messages');
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-        });
-
-        socket.on('update_user_list', (users) => {
-            const userList = document.getElementById('userList');
+        // --- 1. TANIMLAMALAR ---
+            const socket = io();
             
-            // 1. TEMİZLİK: Önce listeyi tamamen boşalt (Klonlanmayı önler)
-            userList.innerHTML = ''; 
-            
-            users.forEach(user => {
-                const alreadyExists = userList.querySelector(`[data-username="${user}"]`);
-                if (alreadyExists) return;
-
-                // 3. ELEMENT OLUŞTURMA
-                const li = document.createElement('li');
-                li.className = 'user-item';
-                
-                li.setAttribute('data-username', user); 
-
-                const isMe = user === currentUsername ? ' <span style="opacity:0.5;">(You)</span>' : '';
-                
-                // 6. İÇERİĞİ DOLDUR
-                li.innerHTML = `<span class="online-dot"></span> ${user}${isMe}`;
-                
-                // 7. LİSTEYE EKLE
-                userList.appendChild(li);
+            // +++ PEERJS'İ KENDİ SUNUCUMUZA YÖNLENDİRİYORUZ +++
+            const peer = new Peer(undefined, {
+                host: '/',             // Kendi sunucumuz (Localhost veya Render)
+                path: '/peerjs',       // Server.js'de belirlediğimiz yol
+                port: location.port || (location.protocol === 'https:' ? 443 : 80),
+                secure: location.protocol === 'https:', // HTTPS ise güvenli, değilse normal
+                debug: 2,
+                config: {
+                    'iceServers': [
+                        { url: 'stun:stun.l.google.com:19302' }, 
+                        { url: 'stun:stun1.l.google.com:19302' }
+                    ]
+                }
             });
-        });
-
-       
-        socket.on('user-voice-status', (data) => {
-            console.log("Voice state came from server:", data); 
-
+            // ++++++++++++++++++++++++++++++++++++++++++++++++
             
-            let userElement = document.querySelector(`[data-username="${data.username}"]`);
+            let currentUsername = "";
+            let myStream;
+            let isMuted = false;
+            let isDeafened = false;
+            const peers = {}; 
 
+            // --- 2. BAŞLANGIÇ AYARLARI (BUTONU KİLİTLE) ---
+            const voiceBtn = document.getElementById('voiceBtn');
             
-            if (!userElement) {
-                console.log("Couldn't find with lowercase, trying uppercase.");
-                const upperName = data.username.toLocaleUpperCase('en-US');
-                userElement = document.querySelector(`[data-username="${upperName}"]`);
+            if (voiceBtn) {
+                voiceBtn.disabled = true;
+                voiceBtn.innerText = "Connecting...";
+                voiceBtn.style.opacity = "0.5";
+                voiceBtn.style.cursor = "not-allowed";
             }
 
-            
-            if (!userElement) {
-                const trUpper = data.username.toUpperCase();
-                userElement = document.querySelector(`[data-username="${trUpper}"]`);
-            }
+            // --- 3. KİMLİK TESPİTİ ---
+            fetch('/api/userinfo')
+                .then(res => res.json())
+                .then(data => {
+                    currentUsername = data.username;
+                    socket.emit('user_joined', currentUsername);
+                })
+                .catch(err => console.error("Kullanıcı bilgisi alınamadı:", err));
 
-            if (userElement) {
-                console.log("✅ User found, adding badge.");
+            // --- 4. PEERJS BAĞLANTISI ---
+            
+            peer.on('open', (id) => {
+                console.log('✅ PeerJS Sunucuna Bağlandı. ID:', id);
                 
-                // Eski badge'i temizle
-                const oldBadge = userElement.querySelector('.voice-badge');
-                if (oldBadge) oldBadge.remove();
-
-                // Sesteyse ekle
-                if (data.inVoice) {
-                    const badge = document.createElement('span');
-                    badge.className = 'voice-badge';
-                    badge.innerText = ' IN VOICE';
-                    userElement.appendChild(badge);
+                if (voiceBtn) {
+                    voiceBtn.disabled = false;
+                    voiceBtn.innerText = "JOIN VOICE";
+                    voiceBtn.style.opacity = "1";
+                    voiceBtn.style.cursor = "pointer";
                 }
-            } else {
-                console.error("❌ ERROR: User couldn't find! Check data-username on HTML");
+            });
+            
+            peer.on('error', (err) => {
+                console.error('❌ PeerJS Hatası:', err);
+                if (voiceBtn) {
+                    voiceBtn.innerText = "Error!";
+                    alert("Ses hatası. Lütfen sayfayı yenileyin.");
+                }
+            });
+
+            // --- 5. MESAJLAŞMA ---
+            function sendMessage() {
+                const input = document.getElementById('messageInput');
+                if (input.value.trim() && currentUsername) {
+                    socket.emit('chat_message', { user: currentUsername, text: input.value });
+                    input.value = '';
+                }
             }
-        });
 
-
-        
-        // A) Join Voice Butonu (GÜNCELLENMİŞ VE FİNAL HALİ)
-        const voiceBtn = document.getElementById('voiceBtn');
-
-        if (voiceBtn) {
-            voiceBtn.addEventListener('click', async () => {
-                // PeerJS hazır değilse uyarı ver
-                if (!peer || !peer.id) {
-                    alert("Connection preparing. Please wait...");
-                    return;
+            document.getElementById('messageInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
                 }
+            });
 
-                try {
-                    // 1. Mikrofon izni iste
-                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            socket.on('new_message', (data) => {
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'message-item';
+                const formattedText = data.text.replace(/\n/g, '<br>');
+                msgDiv.innerHTML = `<strong>${data.user}</strong><br>${formattedText}`;
+                const container = document.getElementById('messages');
+                container.appendChild(msgDiv);
+                container.scrollTop = container.scrollHeight;
+            });
+
+            // --- GÜNCELLENMİŞ KULLANICI LİSTESİ ---
+            socket.on('update_user_list', (users) => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = ''; 
+                
+                users.forEach(user => {
+                    const alreadyExists = userList.querySelector(`[data-username="${user}"]`);
+                    if (alreadyExists) return;
+
+                    const li = document.createElement('li');
+                    li.className = 'user-item';
+                    li.setAttribute('data-username', user); 
+
+                    const isMe = user === currentUsername ? ' <span style="opacity:0.5;">(You)</span>' : '';
+                    li.innerHTML = `<span class="online-dot"></span> ${user}${isMe}`;
+                    userList.appendChild(li);
+                });
+            });
+
+            // Sayfa yenilendiğinde sestekileri görüp yeşil rozet takar
+            socket.on('current_voice_users', (voiceUsersList) => {
+                voiceUsersList.forEach(username => {
+                    const userElement = document.querySelector(`[data-username="${username}"]`);
                     
-                    // 2. Görsel Değişiklikler (Butonu 'ON VOICE' yap)
-                    voiceBtn.innerText = "ON VOICE";
-                    voiceBtn.style.color = "#00ff44";       // Yeşil yazı
-                    voiceBtn.style.borderColor = "#00ff44"; // Yeşil çerçeve
-                    voiceBtn.style.boxShadow = "0 0 15px rgba(0, 255, 68, 0.4)"; // Neon parlama
-                    voiceBtn.disabled = true;               // Tıklamayı engelle
-                    voiceBtn.style.cursor = "default";
-
-                    // 3. Kontrol panelini (Mute/Leave butonlarını) aç
-                    const actionsDiv = document.getElementById('voiceActions');
-                    if(actionsDiv) actionsDiv.style.display = 'flex';
-
-                    // 4. Sunucuya bildir (Diğerleri görsün diye)
-                    socket.emit('join-voice', { 
-                        peerId: peer.id, 
-                        username: currentUsername 
-                    });
-
-                    
-                    // Sunucuyu beklemeden, kendi isminin yanına yazıyı yapıştırıyoruz.
-                    const myUserElement = document.querySelector(`[data-username="${currentUsername}"]`);
-                    
-                    if (myUserElement) {
-                        // Varsa eskisi silinir (bug olmasın diye)
-                        const oldBadge = myUserElement.querySelector('.voice-badge');
-                        if (oldBadge) oldBadge.remove();
-
-                        // Yeni badge oluşturulur
+                    // Eğer kullanıcı listede varsa ve henüz rozeti yoksa ekle
+                    if (userElement && !userElement.querySelector('.voice-badge')) {
                         const badge = document.createElement('span');
                         badge.className = 'voice-badge';
                         badge.innerText = ' IN VOICE';
-                        
-                        
-                        myUserElement.appendChild(badge);
+                        userElement.appendChild(badge);
                     }
-                    
+                });
+            });
 
-                    console.log("Entered to voice chat, sent to server and written to user's screen.");
+            socket.on('user-voice-status', (data) => {
+                let userElement = document.querySelector(`[data-username="${data.username}"]`);
 
-                } catch (err) {
-                    console.error("Mic error:", err);
-                    alert("Couldn't access to mic! Please check browser permissions.");
+                if (userElement) {
+                    const oldBadge = userElement.querySelector('.voice-badge');
+                    if (oldBadge) oldBadge.remove();
+
+                    if (data.inVoice) {
+                        const badge = document.createElement('span');
+                        badge.className = 'voice-badge';
+                        badge.innerText = ' IN VOICE';
+                        userElement.appendChild(badge);
+                    }
                 }
             });
-        }
 
-        // B) Biri Bizi Ararsa (Cevaplama)
-        peer.on('call', (call) => {
-            call.answer(myStream);
-            const audio = document.createElement('audio');
+
+            // --- 6. SESLİ SOHBET KONTROLLERİ ---
             
-            call.on('stream', (userStream) => {
-                addAudioStream(audio, userStream);
-                if (isDeafened) audio.muted = true;
+            if (voiceBtn) {
+                voiceBtn.addEventListener('click', async () => {
+                    if (!peer || !peer.id) return;
+
+                    try {
+                        myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        
+                        voiceBtn.innerText = "ON VOICE";
+                        voiceBtn.style.color = "#00ff44";
+                        voiceBtn.style.borderColor = "#00ff44";
+                        voiceBtn.style.boxShadow = "0 0 15px rgba(0, 255, 68, 0.4)";
+                        voiceBtn.disabled = true;
+                        voiceBtn.style.cursor = "default";
+
+                        const actionsDiv = document.getElementById('voiceActions');
+                        if(actionsDiv) actionsDiv.style.display = 'flex';
+
+                        socket.emit('join-voice', { 
+                            peerId: peer.id, 
+                            username: currentUsername 
+                        });
+
+                        // Kendine Badge Ekle
+                        const myUserElement = document.querySelector(`[data-username="${currentUsername}"]`);
+                        if (myUserElement) {
+                            const oldBadge = myUserElement.querySelector('.voice-badge');
+                            if (oldBadge) oldBadge.remove();
+                            const badge = document.createElement('span');
+                            badge.className = 'voice-badge';
+                            badge.innerText = ' IN VOICE';
+                            myUserElement.appendChild(badge);
+                        }
+
+                    } catch (err) {
+                        console.error("Mikrofon hatası:", err);
+                        alert("Mikrofon hatası! İzinleri kontrol edin.");
+                    }
+                });
+            }
+
+            // ARAMA CEVAPLAMA
+            peer.on('call', (call) => {
+                call.answer(myStream);
+                const audio = document.createElement('audio');
+                call.on('stream', (userStream) => {
+                    addAudioStream(audio, userStream);
+                    if (isDeafened) audio.muted = true;
+                });
+                peers[call.peer] = call;
             });
-            peers[call.peer] = call;
-        });
 
-        // C) Yeni Biri Gelirse
-        socket.on('user-joined-voice', (data) => {
-            if (data.peerId === peer.id) return; 
+            // YENİ KULLANICI GELDİĞİNDE
+            socket.on('user-joined-voice', (data) => {
+                if (data.peerId === peer.id) return; 
 
-            const call = peer.call(data.peerId, myStream);
-            const audio = document.createElement('audio');
-            
-            call.on('stream', (userStream) => {
-                addAudioStream(audio, userStream);
-                if (isDeafened) audio.muted = true;
+                const call = peer.call(data.peerId, myStream);
+                const audio = document.createElement('audio');
+                call.on('stream', (userStream) => {
+                    addAudioStream(audio, userStream);
+                    if (isDeafened) audio.muted = true;
+                });
+                peers[data.peerId] = call;
             });
-            peers[data.peerId] = call;
-        });
 
-        
-
-        // Mute (Mikrofonu Kapat)
-        document.getElementById('muteBtn').addEventListener('click', () => {
-            if (!myStream) return;
-            isMuted = !isMuted;
-            myStream.getAudioTracks()[0].enabled = !isMuted;
-            
-            const btn = document.getElementById('muteBtn');
-            btn.innerText = isMuted ? "🔇" : "🎤";
-            btn.style.color = isMuted ? "#ff0044" : "#cd00ff";
-        });
-
-        // Deafen (Sesi Kapat)
-        document.getElementById('deafenBtn').addEventListener('click', () => {
-            isDeafened = !isDeafened;
-            document.querySelectorAll('#remote-audios audio').forEach(audio => audio.muted = isDeafened);
-            
-            const btn = document.getElementById('deafenBtn');
-            btn.innerText = isDeafened ? "🚫" : "🎧";
-            btn.style.color = isDeafened ? "#ff0044" : "#cd00ff";
-        });
-
-        // Leave (Ayrıl) Butonu
-        document.getElementById('leaveBtn').addEventListener('click', () => {
-            
-            
-            // (Bunu sayfa yenilenmeden hemen önce yapmalıyız)
-            if (typeof socket !== 'undefined' && typeof currentUsername !== 'undefined') {
-                socket.emit('leave-voice', { username: currentUsername });
-            }
-
-            // 2. Mikrofon ve Bağlantıları kes
-            if (myStream) {
-                myStream.getTracks().forEach(track => track.stop()); // Mikrofon ışığını söndürür
-            }
-            if (peers) {
-                Object.values(peers).forEach(call => call.close()); // Bağlantıları koparır
-            }
-            
-            // 3. Kendi ekranındaki 'IN VOICE' yazısını sil
-            const myElem = document.querySelector(`[data-username="${currentUsername}"]`);
-            if (myElem) {
-                const badge = myElem.querySelector('.voice-badge');
-                if (badge) badge.remove();
-            }
-
-            // 4. Butonu ESKİ HALİNE getir
-            const vBtn = document.getElementById('voiceBtn');
-            if (vBtn) {
-                vBtn.innerText = "JOIN VOICE";
-                vBtn.style.color = "";       
-                vBtn.style.borderColor = ""; 
-                vBtn.style.boxShadow = "";   
-                vBtn.disabled = false;       
-                vBtn.style.cursor = "pointer";
-            }
-
-            // 5. Kontrol panelini gizle
-            const actionsDiv = document.getElementById('voiceActions');
-            if (actionsDiv) actionsDiv.style.display = 'none';
-            
-            // 6. Sayfayı yenile (Tertemiz bir başlangıç için)
-            location.reload(); 
-        });
-
-        function addAudioStream(audio, stream) {
-            audio.srcObject = stream;
-            audio.addEventListener('loadedmetadata', () => {
-                audio.play();
+            // BUTONLAR
+            document.getElementById('muteBtn').addEventListener('click', () => {
+                if (!myStream) return;
+                isMuted = !isMuted;
+                myStream.getAudioTracks()[0].enabled = !isMuted;
+                const btn = document.getElementById('muteBtn');
+                btn.innerText = isMuted ? "🔇" : "🎤";
+                btn.style.color = isMuted ? "#ff0044" : "#cd00ff";
             });
-            const container = document.getElementById('remote-audios');
-            if(container) container.append(audio);
-        }
-    </script>
+
+            document.getElementById('deafenBtn').addEventListener('click', () => {
+                isDeafened = !isDeafened;
+                document.querySelectorAll('audio').forEach(audio => audio.muted = isDeafened);
+                const btn = document.getElementById('deafenBtn');
+                btn.innerText = isDeafened ? "🚫" : "🎧";
+                btn.style.color = isDeafened ? "#ff0044" : "#cd00ff";
+            });
+
+            document.getElementById('leaveBtn').addEventListener('click', () => {
+                if (typeof socket !== 'undefined') socket.emit('leave-voice', { username: currentUsername });
+                if (myStream) myStream.getTracks().forEach(track => track.stop());
+                Object.values(peers).forEach(call => call.close());
+                location.reload(); 
+            });
+
+            function addAudioStream(audio, stream) {
+                audio.srcObject = stream;
+                audio.addEventListener('loadedmetadata', () => {
+                    audio.play();
+                });
+                document.body.append(audio);
+            }
+        </script>
 </body>
 </html>

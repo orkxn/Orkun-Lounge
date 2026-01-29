@@ -4,15 +4,27 @@ const mysql = require('mysql2');
 const session = require('express-session');
 const http = require('http');
 const { Server } = require('socket.io');
+// +++ 1. PEER KÜTÜPHANESİNİ ÇAĞIRDIK +++
+const { ExpressPeerServer } = require('peer'); 
+// +++++++++++++++++++++++++++++++++++++++
+
 require('dotenv').config();
 
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const app = express();
 
-const server = http.createServer(app); // Express'i HTTP server'a bağla
-const io = new Server(server); // Socket.io'yu başlat
+const server = http.createServer(app); 
+const io = new Server(server); 
 
+// +++ 2. SES SUNUCUSUNU EXPRESS İÇİNE GÖMDÜK +++
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+  path: '/'
+});
+
+app.use('/peerjs', peerServer);
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -20,12 +32,12 @@ app.use(express.static("public"));
 
 // --- SESSION AYARLARI ---
 app.use(session({
-    secret: process.env.SESSION_SECRET, // .env dosyasındaki gizli anahtarı kullanır
-    resave: true,                       // Oturumu her istekte yeniler, bağlantı kopmalarını önler
-    saveUninitialized: false,           // Sadece giriş yapmış kullanıcılar için oturum oluşturur (Daha güvenli)
+    secret: process.env.SESSION_SECRET || "gizli_anahtar", 
+    resave: true,                       
+    saveUninitialized: false,           
     cookie: { 
-        secure: false,                  // HTTP (Localhost) için false, HTTPS'ye geçince Render bunu yönetecek zaten
-        maxAge: 1000 * 60 * 60 * 24     // Oturumun ömrü 1 gün
+        secure: false,                  
+        maxAge: 1000 * 60 * 60 * 24     
     }
 }));
 
@@ -34,8 +46,7 @@ const dbase = mysql.createConnection({
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306, //both local and hosting
-    // EĞER host localhost değilse SSL kullan, localhost ise SSL'i kapat
+    port: process.env.DB_PORT || 3306,
     ssl: (process.env.DB_HOST && process.env.DB_HOST !== 'localhost') 
          ? { rejectUnauthorized: false } 
          : false,
@@ -50,42 +61,43 @@ dbase.connect(err => {
     console.log("MySQL connected!");
 });
 
-// --- SERVER.JS İÇİNDEKİ SOCKET.IO KISMI ---
 
-let activeUsers = {}; // Format: { socketId: "username" }
+function broadcastUserList() {
+    // 1. Kullanıcı Listesini Gönder
+    const userList = [...new Set(Object.values(activeUsers))];
+    io.emit('update_user_list', userList);
+
+    io.emit('current_voice_users', Array.from(voiceUsers)); 
+}
+
+let activeUsers = {}; 
+let voiceUsers = new Set();
 
 io.on('connection', (socket) => {
 
-    // 1. KULLANICI GİRİŞİ (BURASI GÜNCELLENDİ)
     socket.on('user_joined', (username) => {
-        
-        // --- DUPLICATE (ÇİFT KAYIT) KONTROLÜ ---
-        // Eğer bu isimde eski bir socket kaydı varsa onu siliyoruz.
         Object.keys(activeUsers).forEach((socketId) => {
             if (activeUsers[socketId] === username) {
                 delete activeUsers[socketId];
             }
         });
 
-        // Yeni bağlantıyı ekle
         console.log(`A user connected: ${username} (Socket ID: ${socket.id})`);
         activeUsers[socket.id] = username;
         
-        // Listeyi herkese gönder (Set kullanarak %100 benzersiz olduğundan emin oluyoruz)
-        const userList = [...new Set(Object.values(activeUsers))];
-        io.emit('update_user_list', userList);
+
+        socket.emit('current_voice_users', Array.from(voiceUsers));
+
+        broadcastUserList();
     });
 
-    // 2. TEXT MESAJLAŞMA
     socket.on('chat_message', (data) => {
         io.emit('new_message', data);
     });
 
     // -- SESLİ SOHBET OLAYLARI --
-
-    // 3. BİRİSİ SESE GİRDİĞİNDE
     socket.on('join-voice', (data) => {
-        // Bu mesajı gönderen hariç ODADAKİ HERKESE duyur
+        voiceUsers.add(data.username);
         socket.broadcast.emit('user-joined-voice', data);
         console.log(`${data.username} joined Voice Channel`);
 
@@ -95,38 +107,36 @@ io.on('connection', (socket) => {
         });
     });
 
-    // 4. KULLANICI AYRILDIĞINDA (HEM CHAT HEM SES)
     socket.on('disconnect', () => {
-        // Sadece listede varsa işlem yap (Refresh durumunda zaten silinmiş olabilir)
         if (activeUsers[socket.id]) {
             const username = activeUsers[socket.id];
             
-            // Önce sesten ayrıldığını herkese duyur (IN VOICE yazısı silinsin)
+            if (voiceUsers.has(username)) {    
+                voiceUsers.delete(username);   
+            }
+
             socket.broadcast.emit('user-voice-status', { 
                 username: username, 
                 inVoice: false 
             });
 
             console.log(`${username} left (Disconnected)`);
-            
-            // Kullanıcıyı listeden sil
             delete activeUsers[socket.id];
             
-            // Güncel listeyi gönder
-            const userList = [...new Set(Object.values(activeUsers))];
-            io.emit('update_user_list', userList);
+            broadcastUserList();
         }
     });
 
-    // Kullanıcı sesten ayrıldığında (Buton ile)
     socket.on('leave-voice', (data) => {
+        voiceUsers.delete(data.username);
         socket.broadcast.emit('user-voice-status', { 
             username: data.username, 
             inVoice: false 
         });
     });
-
 });
+
+// --- ROTALAR (LOGIN, SIGNUP, DASHBOARD) ---
 
 app.get("/login", (req,res) => {
     res.sendFile(path.join(__dirname, "public", "login.html"));
@@ -134,8 +144,6 @@ app.get("/login", (req,res) => {
 
 app.post("/login", (req,res) => {
     const {username, password} = req.body;
-
-    console.log(`Login attempt: ${username}:${password}`);
 
     if (!username || !password) {
         return res.json({ success: false, message: "Username or password is missing." });
@@ -146,118 +154,64 @@ app.post("/login", (req,res) => {
         [username],
         (err, results) => {
             if(err){ 
-                console.log("Database login connection error.");
+                console.log("Database login error:", err);
                 return res.json({ success: false, message: "Database error." });
             }
 
             if(results.length > 0){
                 const user = results[0];
-
                 bcrypt.compare(password, user.password, (err, isMatch) => {
-                    if (err) {
-                        console.log("Bcrypt error:", err);
-                        return res.status(500).json({ success: false, message: "Password control error." });
-                    }
-
+                    if (err) return res.status(500).json({ success: false, message: "Error." });
                     if (isMatch){
                         req.session.user = username;
-
                         req.session.save((err) => {
                             if (err) return console.log("Session save error:", err);
-                            console.log("SUCCESSFUL");
                             res.json({ success: true, redirectUrl: "/dashboard" });
-                            return;
                         });
-                    }
-
-                    else{
-                        console.log(`Username or password is incorrect.`);
+                    } else {
                         res.json({ success: false, message: "Username or password is incorrect!" });
-                        return;
                     }
                 });
-            }
-            else{
-                console.log(`User not found`);
+            } else {
                 res.json({ success: false, message: "Username or password is incorrect!" });
-                return;
             }
         }
     );
 });
 
-
-
-// 1. Sign Up sayfasını gösterme rotası (GET)
 app.get("/signup", (req,res) => {
     res.sendFile(path.join(__dirname, "public", "signup.html"));
 });
 
-// 2. Sign Up formunu işleme rotası (POST)
 app.post("/signup", (req,res) => {
     const {username, password} = req.body;
     if(!username || !password){
-        res.json({ success: false, message: "Enter username and password." });
-        return;
+        return res.json({ success: false, message: "Enter username and password." });
     }
 
-    dbase.query(
-        "SELECT username FROM users WHERE username = ?",
-        [username],
-        (err, results) => {
-            if (err) {
-                console.log("Database signup error:", err);
-                return res.json({ success: false, message: "A database error occurred." });
-            }
-
-            if(results.length > 0){
-                console.log(`Username: '${username}' is already exists. Use another one.`);
-                res.json({ success: false, message: `Username '${username}' already exists. User another one.` });
-                return;
-            }
-
-            bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
-
-            if (err) {
-                    console.log("Hashing error:", err);
-                    return res.json({ success: false, message: "Error securing password." });
-            }
-
-            dbase.query(
-                "INSERT INTO users (username, password) VALUES (?, ?)",
-                [username, hashedPassword],
-                (err, results) => {
-                    if (err) {
-                            console.log("Database signup insert error:", err);
-                            return res.json({ success: false, message: "Error creating user." });
-                    }
-                    
-                    console.log(`username:'${username}', password: '${password}' has been created. You can login now.`);
-                    res.json({ success: true, message: `username:'${username}', password: '${password}' has been created. You can login now.` });
-                    return;
-                }
-            );
-
-            });
+    dbase.query("SELECT username FROM users WHERE username = ?", [username], (err, results) => {
+        if (err) return res.json({ success: false, message: "Database error." });
+        if(results.length > 0){
+            return res.json({ success: false, message: `Username '${username}' already exists.` });
         }
-    );
+
+        bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+            if (err) return res.json({ success: false, message: "Error securing password." });
+            dbase.query("INSERT INTO users (username, password) VALUES (?, ?)", [username, hashedPassword], (err, results) => {
+                if (err) return res.json({ success: false, message: "Error creating user." });
+                res.json({ success: true, message: "User created! Login now." });
+            });
+        });
+    });
 });
 
 app.get("/api/userinfo", (req,res) => {
-    if(req.session.user){
-        res.json({ username: req.session.user });
-    }
-    else{
-        res.status(401).json({ error: "Couldn't be logged in." });
-    }
+    if(req.session.user) res.json({ username: req.session.user });
+    else res.status(401).json({ error: "Not logged in." });
 });
 
 app.get("/dashboard", (req, res) => {
-    if(!req.session.user){
-        console.log("Unpermitted dashboard attempt?");
-        return res.redirect("/login");
-    }
-
+    if(!req.session.user) return res.redirect("/login");
     res.sendFile(path.join(__dirname, "dashboard.html"));
 });
 
@@ -268,7 +222,6 @@ app.get("/", (req, res) => {
 app.get("/logout", (req,res) => {
     req.session.destroy();
     res.redirect("/");
-    return;
 });
 
 app.get("/chat", (req, res) => {
@@ -280,5 +233,5 @@ const PORT = process.env.PORT || 4444;
 
 server.listen(PORT, () => {
     console.log(`Server + Chat running at port: ${PORT}`);
-    console.log(`Local erişim: http://localhost:${PORT}`);
+    console.log(`Server + Chat running at: http://localhost:${PORT}`);
 });
