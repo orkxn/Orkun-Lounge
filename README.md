@@ -21,6 +21,7 @@ If you are developing or building from source, ensure you have Node.js installed
 npm install
 npm run build
 ```
+Note: The integrated PeerServer runs on the same port as the Express backend, simplifying deployment and firewall configuration.
 
 ## Features
 
@@ -28,7 +29,7 @@ Lounge Chat includes several integrated systems for a comprehensive communicatio
 
 - Real-Time Messaging: Instant text communication across all connected clients.
 
-- Voice Connectivity: Peer-to-peer voice streaming with dedicated mute and deafen controls.
+- Voice Connectivity: Reliable peer-to-peer voice connectivity with a a self-hosted signaling server.
 
 - User Presence: Dynamic online status indicators that show active users and their current voice state.
 
@@ -56,7 +57,7 @@ Once the application is launched, users can follow this workflow to start commun
 
 - Communication: Socket.io (Websockets)
 
-- Voice Protocol: PeerJS (WebRTC)
+- Voice Protocol: PeerJS (WebRTC) with a Self-Hosted PeerServer
 
 - Database: MySQL
 
