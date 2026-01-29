@@ -50,7 +50,6 @@ function createWindow() {
     });
 }
 
-// --- OTOMATİK GÜNCELLEME OLAYLARI ---
 
 // Güncelleme bulundu
 autoUpdater.on('update-available', () => {
