@@ -42,7 +42,7 @@ function createWindow() {
         return { action: 'deny' };
     });
 
-    // --- GÜNCELLEME KONTROLÜ BAŞLANGICI ---
+    
     // Pencere açılıp içerik göründüğünde güncelleme kontrolü yap
     win.once('ready-to-show', () => {
         // Hem kontrol eder hem de kullanıcıya bildirim gösterir (Windows notification)
