@@ -320,21 +320,26 @@
 
         socket.on('update_user_list', (users) => {
             const userList = document.getElementById('userList');
-            userList.innerHTML = ''; // Listeyi temizle
+            
+            // 1. TEMİZLİK: Önce listeyi tamamen boşalt (Klonlanmayı önler)
+            userList.innerHTML = ''; 
             
             users.forEach(user => {
+                const alreadyExists = userList.querySelector(`[data-username="${user}"]`);
+                if (alreadyExists) return;
+
+                // 3. ELEMENT OLUŞTURMA
                 const li = document.createElement('li');
                 li.className = 'user-item';
                 
-                
                 li.setAttribute('data-username', user); 
-                // ++++++++++++++++++++++++++++++++++
 
-                const isMe = user === currentUsername ? ' (You)' : '';
+                const isMe = user === currentUsername ? ' <span style="opacity:0.5;">(You)</span>' : '';
                 
-                
+                // 6. İÇERİĞİ DOLDUR
                 li.innerHTML = `<span class="online-dot"></span> ${user}${isMe}`;
                 
+                // 7. LİSTEYE EKLE
                 userList.appendChild(li);
             });
         });

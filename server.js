@@ -52,16 +52,28 @@ dbase.connect(err => {
 
 // --- SERVER.JS İÇİNDEKİ SOCKET.IO KISMI ---
 
-let activeUsers = {}; // Online kullanıcılar
-// (Opsiyonel) Sesli kanaldaki kullanıcıları da tutabilirsin ama PeerJS bunu p2p hallediyor.
+let activeUsers = {}; // Format: { socketId: "username" }
 
 io.on('connection', (socket) => {
 
-    // 1. KULLANICI GİRİŞİ (TEXT CHAT İÇİN)
+    // 1. KULLANICI GİRİŞİ (BURASI GÜNCELLENDİ)
     socket.on('user_joined', (username) => {
-        console.log(`A user connected`, username, 'Socket id:', socket.id);
+        
+        // --- DUPLICATE (ÇİFT KAYIT) KONTROLÜ ---
+        // Eğer bu isimde eski bir socket kaydı varsa onu siliyoruz.
+        Object.keys(activeUsers).forEach((socketId) => {
+            if (activeUsers[socketId] === username) {
+                delete activeUsers[socketId];
+            }
+        });
+
+        // Yeni bağlantıyı ekle
+        console.log(`A user connected: ${username} (Socket ID: ${socket.id})`);
         activeUsers[socket.id] = username;
-        io.emit('update_user_list', Object.values(activeUsers));
+        
+        // Listeyi herkese gönder (Set kullanarak %100 benzersiz olduğundan emin oluyoruz)
+        const userList = [...new Set(Object.values(activeUsers))];
+        io.emit('update_user_list', userList);
     });
 
     // 2. TEXT MESAJLAŞMA
@@ -69,7 +81,7 @@ io.on('connection', (socket) => {
         io.emit('new_message', data);
     });
 
-    // -- SESLİ SOHBET OLAYLARI (BURASI KRİTİK) --
+    // -- SESLİ SOHBET OLAYLARI --
 
     // 3. BİRİSİ SESE GİRDİĞİNDE
     socket.on('join-voice', (data) => {
@@ -78,29 +90,35 @@ io.on('connection', (socket) => {
         console.log(`${data.username} joined Voice Channel`);
 
         socket.broadcast.emit('user-voice-status', { 
-        username: data.username, 
-        inVoice: true 
+            username: data.username, 
+            inVoice: true 
         });
     });
 
     // 4. KULLANICI AYRILDIĞINDA (HEM CHAT HEM SES)
     socket.on('disconnect', () => {
+        // Sadece listede varsa işlem yap (Refresh durumunda zaten silinmiş olabilir)
         if (activeUsers[socket.id]) {
             const username = activeUsers[socket.id];
             
-            // Önce sesten ayrıldığını herkese duyur (Böylece "IN VOICE" yazısı silinir)
+            // Önce sesten ayrıldığını herkese duyur (IN VOICE yazısı silinsin)
             socket.broadcast.emit('user-voice-status', { 
                 username: username, 
                 inVoice: false 
             });
 
-            console.log(`${username} left`);
+            console.log(`${username} left (Disconnected)`);
+            
+            // Kullanıcıyı listeden sil
             delete activeUsers[socket.id];
-            io.emit('update_user_list', Object.values(activeUsers));
+            
+            // Güncel listeyi gönder
+            const userList = [...new Set(Object.values(activeUsers))];
+            io.emit('update_user_list', userList);
         }
     });
 
-    // Kullanıcı sesten ayrıldığında
+    // Kullanıcı sesten ayrıldığında (Buton ile)
     socket.on('leave-voice', (data) => {
         socket.broadcast.emit('user-voice-status', { 
             username: data.username, 
