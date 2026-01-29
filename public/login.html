@@ -159,7 +159,7 @@
 
     <div class="login-box">
         <h2>Login</h2>
-        <form action="/login" method="POST">
+        <form id="loginForm">
             <div class="input-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>
@@ -171,11 +171,57 @@
             
             <button type="submit" class="submit-btn">SUBMIT</button>
 
+            <p id="error-message" style="color: #ff3333; margin-top: 15px; font-size: 14px; display: none; text-align: center;"></p>
+
             <div class="switch-page-link">
-                Don't you have an account? <a href="/signup">      Sign up here</a>
+                Don't you have an account? <a href="/signup">Sign up here</a>
             </div>
         </form>
     </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); // Sayfanın beyazlayıp yenilenmesini durdurur
+
+            const usernameVal = document.getElementById('username').value;
+            const passwordVal = document.getElementById('password').value;
+            const errorText = document.getElementById('error-message');
+            const submitBtn = document.querySelector('.submit-btn');
+
+            // Kullanıcıya işlem yapıldığını hissettirelim
+            submitBtn.innerText = "CHECKING...";
+            errorText.style.display = 'none';
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usernameVal, password: passwordVal })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Başarılıysa yönlendir
+                    window.location.href = data.redirectUrl;
+                } else {
+                    // Hatalıysa hatayı yazdır ve butonu düzelt
+                    errorText.innerText = data.message;
+                    errorText.style.display = 'block';
+                    submitBtn.innerText = "SUBMIT";
+                    
+                    // Şifreyi temizle ki tekrar deneyebilsin
+                    document.getElementById('password').value = "";
+                }
+
+            } catch (err) {
+                console.error(err);
+                errorText.innerText = "Server connection error.";
+                errorText.style.display = 'block';
+                submitBtn.innerText = "SUBMIT";
+            }
+        });
+    </script>
 
 </body>
 </html>

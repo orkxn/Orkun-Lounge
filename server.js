@@ -15,6 +15,7 @@ const io = new Server(server); // Socket.io'yu başlat
 
 
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(express.static("public"));
 
 // --- SESSION AYARLARI ---
@@ -58,7 +59,7 @@ io.on('connection', (socket) => {
 
     // 1. KULLANICI GİRİŞİ (TEXT CHAT İÇİN)
     socket.on('user_joined', (username) => {
-        console.log(`Bir kullanıcı bağlandı:`, username, 'Socket id:', socket.id);
+        console.log(`A user connected`, username, 'Socket id:', socket.id);
         activeUsers[socket.id] = username;
         io.emit('update_user_list', Object.values(activeUsers));
     });
@@ -74,17 +75,39 @@ io.on('connection', (socket) => {
     socket.on('join-voice', (data) => {
         // Bu mesajı gönderen hariç ODADAKİ HERKESE duyur
         socket.broadcast.emit('user-joined-voice', data);
-        console.log(`🎤 ${data.username} sesli kanala katıldı.`);
+        console.log(`${data.username} joined Voice Channel`);
+
+        socket.broadcast.emit('user-voice-status', { 
+        username: data.username, 
+        inVoice: true 
+        });
     });
 
     // 4. KULLANICI AYRILDIĞINDA (HEM CHAT HEM SES)
     socket.on('disconnect', () => {
         if (activeUsers[socket.id]) {
-            console.log(`${activeUsers[socket.id]} ayrıldı.`);
+            const username = activeUsers[socket.id];
+            
+            // Önce sesten ayrıldığını herkese duyur (Böylece "IN VOICE" yazısı silinir)
+            socket.broadcast.emit('user-voice-status', { 
+                username: username, 
+                inVoice: false 
+            });
+
+            console.log(`${username} left`);
             delete activeUsers[socket.id];
             io.emit('update_user_list', Object.values(activeUsers));
         }
     });
+
+    // Kullanıcı sesten ayrıldığında
+    socket.on('leave-voice', (data) => {
+        socket.broadcast.emit('user-voice-status', { 
+            username: data.username, 
+            inVoice: false 
+        });
+    });
+
 });
 
 app.get("/login", (req,res) => {
@@ -93,11 +116,21 @@ app.get("/login", (req,res) => {
 
 app.post("/login", (req,res) => {
     const {username, password} = req.body;
+
+    console.log(`Login attempt: ${username}:${password}`);
+
+    if (!username || !password) {
+        return res.json({ success: false, message: "Username or password is missing." });
+    }
+
     dbase.query(
         "SELECT * FROM users WHERE BINARY username = ?",
         [username],
         (err, results) => {
-            if(err) return console.log("Database login connection error.");
+            if(err){ 
+                console.log("Database login connection error.");
+                return res.json({ success: false, message: "Database error." });
+            }
 
             if(results.length > 0){
                 const user = results[0];
@@ -105,7 +138,7 @@ app.post("/login", (req,res) => {
                 bcrypt.compare(password, user.password, (err, isMatch) => {
                     if (err) {
                         console.log("Bcrypt error:", err);
-                        return res.status(500).send("Bcrypt error");
+                        return res.status(500).json({ success: false, message: "Password control error." });
                     }
 
                     if (isMatch){
@@ -113,20 +146,22 @@ app.post("/login", (req,res) => {
 
                         req.session.save((err) => {
                             if (err) return console.log("Session save error:", err);
-                            res.redirect("/dashboard");
+                            console.log("SUCCESSFUL");
+                            res.json({ success: true, redirectUrl: "/dashboard" });
+                            return;
                         });
                     }
 
                     else{
                         console.log(`Username or password is incorrect.`);
-                        res.send(`<script>alert("Username or password is incorrect."); window.location.href ="/login";</script>`);
+                        res.json({ success: false, message: "Username or password is incorrect!" });
                         return;
                     }
                 });
             }
             else{
                 console.log(`User not found`);
-                res.send(`<script>alert("Username or password is incorrect."); window.location.href ="/login";</script>`);
+                res.json({ success: false, message: "Username or password is incorrect!" });
                 return;
             }
         }
@@ -144,7 +179,7 @@ app.get("/signup", (req,res) => {
 app.post("/signup", (req,res) => {
     const {username, password} = req.body;
     if(!username || !password){
-        res.send(`<script>alert("Enter username and password."); window.location.href ="/signup";</script>`);
+        res.json({ success: false, message: "Enter username and password." });
         return;
     }
 
@@ -152,26 +187,35 @@ app.post("/signup", (req,res) => {
         "SELECT username FROM users WHERE username = ?",
         [username],
         (err, results) => {
-            if (err) return console.log("Database signup error.");
+            if (err) {
+                console.log("Database signup error:", err);
+                return res.json({ success: false, message: "A database error occurred." });
+            }
 
             if(results.length > 0){
                 console.log(`Username: '${username}' is already exists. Use another one.`);
-                res.send(`<script>alert("Username: '${username}' is already exists. Use another one."); window.location.href ="/signup";</script>`)
+                res.json({ success: false, message: `Username '${username}' already exists. User another one.` });
                 return;
             }
 
             bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
 
-            if(err) return console.log("Hashing error.");
+            if (err) {
+                    console.log("Hashing error:", err);
+                    return res.json({ success: false, message: "Error securing password." });
+            }
 
             dbase.query(
                 "INSERT INTO users (username, password) VALUES (?, ?)",
                 [username, hashedPassword],
                 (err, results) => {
-                    if(err) return console.log("Database signup insert error.");
+                    if (err) {
+                            console.log("Database signup insert error:", err);
+                            return res.json({ success: false, message: "Error creating user." });
+                    }
                     
-                    console.log(`username:'${username}', password: '${password}' has been created. You can login now.` );
-                    res.send(`<script>alert("User:'${username}' has been created. You can login now."); window.location.href ="/login";</script>`);
+                    console.log(`username:'${username}', password: '${password}' has been created. You can login now.`);
+                    res.json({ success: true, message: `username:'${username}', password: '${password}' has been created. You can login now.` });
                     return;
                 }
             );

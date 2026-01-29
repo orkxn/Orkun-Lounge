@@ -38,7 +38,7 @@
 
     <div class="login-box">
         <h2>Sign Up</h2>
-        <form action="/signup" method="POST">
+        <form id="signupForm">
             <div class="input-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>
@@ -48,13 +48,63 @@
                 <input type="password" id="password" name="password" required>
             </div>
             
-            <button type="submit" class="submit-btn">SIGN UP</button>
+            <button type="submit" class="submit-btn">CREATE ACCOUNT</button>
+
+            <p id="message" style="margin-top: 15px; font-size: 14px; display: none; text-align: center;"></p>
 
             <div class="switch-page-link">
                 Already have an account? <a href="/login">Login here</a>
             </div>
         </form>
     </div>
+
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); 
+
+            const usernameVal = document.getElementById('username').value;
+            const passwordVal = document.getElementById('password').value;
+            const msgElement = document.getElementById('message');
+            const submitBtn = document.querySelector('.submit-btn');
+
+            submitBtn.innerText = "CREATING...";
+            msgElement.style.display = 'none';
+
+            try {
+                const response = await fetch('/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: usernameVal, password: passwordVal })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // BAŞARI: Yeşil mesaj göster ve Login'e yönlendir
+                    msgElement.style.color = "#00ff44";
+                    msgElement.innerText = data.message;
+                    msgElement.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        window.location.href = "/login";
+                    }, 2000); // 2 saniye sonra yönlendir ki kullanıcı başarı mesajını görsün
+                } else {
+                    // HATA: Kırmızı mesaj göster
+                    msgElement.style.color = "#ff3333";
+                    msgElement.innerText = data.message;
+                    msgElement.style.display = 'block';
+                    submitBtn.innerText = "CREATE ACCOUNT";
+                }
+
+            } catch (err) {
+                console.error(err);
+                msgElement.style.color = "#ff3333";
+                msgElement.innerText = "Server connection error.";
+                msgElement.style.display = 'block';
+                submitBtn.innerText = "CREATE ACCOUNT";
+            }
+        });
+    </script>
 
 </body>
 </html>

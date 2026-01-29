@@ -176,15 +176,60 @@
             letter-spacing: 1px;
         }
 
+        
+        .voice-badge {
+            color: #00ff44;     
+            font-size: 12px;    
+            font-weight: 700;    
+            margin-left: 8px;    
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+            
+        }
+
+        /* --- DASHBOARD GERİ DÖN BUTONU --- */
+        .back-btn {
+            text-decoration: none;      /* Alt çizkiyi kaldır */
+            color: #cd00ff;            /* Mor yazı */
+            border: 1px solid #cd00ff; /* Mor çerçeve */
+            padding: 8px 15px;
+            border-radius: 20px;       /* Yuvarlak köşeler */
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 20px;       /* Altındaki liste ile boşluk bırak */
+            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;             /* Ok ve yazıyı hizalamak için */
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .back-btn span {
+            font-size: 18px;           /* Ok işaretini biraz büyüt */
+            line-height: 1;
+        }
+
+        .back-btn:hover {
+            background: #cd00ff;       /* Üzerine gelince mor dolgu */
+            color: #000;               /* Yazı siyah olsun */
+            box-shadow: 0 0 15px rgba(205, 0, 255, 0.5); /* Neon parlama */
+            transform: translateX(-3px); /* Hafif sola kayma efekti */
+        }
+
+
     </style>
 </head>
 <body>
 
     <div class="chat-wrapper">
         <div class="online-sidebar">
+            <a href="/dashboard" class="back-btn">
+                <span>&#8592;</span> Dashboard
+            </a>
             <h3>Online Users</h3>
             <ul class="user-list" id="userList">
-                <li class="user-item"><span class="online-dot"></span> Orkun (Sen)</li>
+                <li class="user-item"><span class="online-dot"></span> ... (You)</li>
             </ul>
         </div>
 
@@ -236,15 +281,15 @@
                 currentUsername = data.username;
                 socket.emit('user_joined', currentUsername);
             })
-            .catch(err => console.error("Kullanıcı bilgisi alınamadı:", err));
+            .catch(err => console.error("User info couldn.'t gathered.", err));
 
         // --- 3. PEERJS BAĞLANTISI ---
         peer.on('open', (id) => {
-            console.log('✅ PeerJS Bağlandı. ID:', id);
+            console.log('✅ PeerJS Connected. ID:', id);
         });
         
         peer.on('error', (err) => {
-            console.error('❌ PeerJS Hatası:', err);
+            console.error('❌ PeerJS Error:', err);
         });
 
         // --- 4. MESAJLAŞMA (TEXT CHAT) ---
@@ -275,50 +320,124 @@
 
         socket.on('update_user_list', (users) => {
             const userList = document.getElementById('userList');
-            userList.innerHTML = '';
+            userList.innerHTML = ''; // Listeyi temizle
+            
             users.forEach(user => {
                 const li = document.createElement('li');
                 li.className = 'user-item';
-                const isMe = user === currentUsername ? ' (Sen)' : '';
+                
+                
+                li.setAttribute('data-username', user); 
+                // ++++++++++++++++++++++++++++++++++
+
+                const isMe = user === currentUsername ? ' (You)' : '';
+                
+                
                 li.innerHTML = `<span class="online-dot"></span> ${user}${isMe}`;
+                
                 userList.appendChild(li);
             });
         });
 
+       
+        socket.on('user-voice-status', (data) => {
+            console.log("Voice state came from server:", data); 
+
+            
+            let userElement = document.querySelector(`[data-username="${data.username}"]`);
+
+            
+            if (!userElement) {
+                console.log("Couldn't find with lowercase, trying uppercase.");
+                const upperName = data.username.toLocaleUpperCase('en-US');
+                userElement = document.querySelector(`[data-username="${upperName}"]`);
+            }
+
+            
+            if (!userElement) {
+                const trUpper = data.username.toUpperCase();
+                userElement = document.querySelector(`[data-username="${trUpper}"]`);
+            }
+
+            if (userElement) {
+                console.log("✅ User found, adding badge.");
+                
+                // Eski badge'i temizle
+                const oldBadge = userElement.querySelector('.voice-badge');
+                if (oldBadge) oldBadge.remove();
+
+                // Sesteyse ekle
+                if (data.inVoice) {
+                    const badge = document.createElement('span');
+                    badge.className = 'voice-badge';
+                    badge.innerText = ' IN VOICE';
+                    userElement.appendChild(badge);
+                }
+            } else {
+                console.error("❌ ERROR: User couldn't find! Check data-username on HTML");
+            }
+        });
+
+
         // --- 5. SESLİ SOHBET (VOICE CHAT) ---
         
-        // A) Join Voice Butonu (GÜNCELLENMİŞ HALİ)
+        // A) Join Voice Butonu (GÜNCELLENMİŞ VE FİNAL HALİ)
         const voiceBtn = document.getElementById('voiceBtn');
+
         if (voiceBtn) {
             voiceBtn.addEventListener('click', async () => {
-                if (!peer.id) {
-                    alert("Bağlantı hazırlanıyor, lütfen bekleyin...");
+                // PeerJS hazır değilse uyarı ver
+                if (!peer || !peer.id) {
+                    alert("Connection preparing. Please wait...");
                     return;
                 }
 
                 try {
-                    // Mikrofon izni iste
+                    // 1. Mikrofon izni iste
                     myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     
-                    // --- BURASI DEĞİŞTİ ---
-                    // Butonu gizlemek yerine stilini ve yazısını değiştiriyoruz
+                    // 2. Görsel Değişiklikler (Butonu 'ON VOICE' yap)
                     voiceBtn.innerText = "ON VOICE";
                     voiceBtn.style.color = "#00ff44";       // Yeşil yazı
                     voiceBtn.style.borderColor = "#00ff44"; // Yeşil çerçeve
-                    voiceBtn.style.boxShadow = "0 0 15px rgba(0, 255, 68, 0.4)"; // Yeşil neon parlaması
-                    voiceBtn.disabled = true;               // Tekrar tıklanmasın
+                    voiceBtn.style.boxShadow = "0 0 15px rgba(0, 255, 68, 0.4)"; // Neon parlama
+                    voiceBtn.disabled = true;               // Tıklamayı engelle
                     voiceBtn.style.cursor = "default";
 
-                    // Kontrol panelini (Mute/Leave) aç
-                    document.getElementById('voiceActions').style.display = 'flex';
-                    // ----------------------
+                    // 3. Kontrol panelini (Mute/Leave butonlarını) aç
+                    const actionsDiv = document.getElementById('voiceActions');
+                    if(actionsDiv) actionsDiv.style.display = 'flex';
 
-                    // Sunucuya bildir
-                    socket.emit('join-voice', { peerId: peer.id, username: currentUsername });
+                    // 4. Sunucuya bildir (Diğerleri görsün diye)
+                    socket.emit('join-voice', { 
+                        peerId: peer.id, 
+                        username: currentUsername 
+                    });
+
+                    
+                    // Sunucuyu beklemeden, kendi isminin yanına yazıyı yapıştırıyoruz.
+                    const myUserElement = document.querySelector(`[data-username="${currentUsername}"]`);
+                    
+                    if (myUserElement) {
+                        // Varsa eskisi silinir (bug olmasın diye)
+                        const oldBadge = myUserElement.querySelector('.voice-badge');
+                        if (oldBadge) oldBadge.remove();
+
+                        // Yeni badge oluşturulur
+                        const badge = document.createElement('span');
+                        badge.className = 'voice-badge';
+                        badge.innerText = ' IN VOICE';
+                        
+                        
+                        myUserElement.appendChild(badge);
+                    }
+                    
+
+                    console.log("Entered to voice chat, sent to server and written to user's screen.");
 
                 } catch (err) {
-                    console.error("Mikrofon hatası:", err);
-                    alert("Mikrofona erişilemedi! İzin verdiğinizden emin olun.");
+                    console.error("Mic error:", err);
+                    alert("Couldn't access to mic! Please check browser permissions.");
                 }
             });
         }
@@ -349,7 +468,7 @@
             peers[data.peerId] = call;
         });
 
-        // --- 6. SES KONTROLLERİ ---
+        
 
         // Mute (Mikrofonu Kapat)
         document.getElementById('muteBtn').addEventListener('click', () => {
@@ -372,25 +491,46 @@
             btn.style.color = isDeafened ? "#ff0044" : "#cd00ff";
         });
 
-        // Leave (Ayrıl) GÜNCELLENMİŞ HALİ
+        // Leave (Ayrıl) Butonu
         document.getElementById('leaveBtn').addEventListener('click', () => {
-            // 1. Bağlantıları kes
-            if (myStream) myStream.getTracks().forEach(track => track.stop());
-            Object.values(peers).forEach(call => call.close());
             
-            // 2. Butonu ESKİ HALİNE getir (Mor yap)
-            const vBtn = document.getElementById('voiceBtn');
-            vBtn.innerText = "JOIN VOICE";
-            vBtn.style.color = "";       // CSS'teki orijinal rengine döner
-            vBtn.style.borderColor = ""; // CSS'teki orijinal rengine döner
-            vBtn.style.boxShadow = "";   // Parlamayı kaldır
-            vBtn.disabled = false;       // Tekrar tıklanabilir yap
-            vBtn.style.cursor = "pointer";
+            
+            // (Bunu sayfa yenilenmeden hemen önce yapmalıyız)
+            if (typeof socket !== 'undefined' && typeof currentUsername !== 'undefined') {
+                socket.emit('leave-voice', { username: currentUsername });
+            }
 
-            // 3. Kontrol panelini gizle
-            document.getElementById('voiceActions').style.display = 'none';
+            // 2. Mikrofon ve Bağlantıları kes
+            if (myStream) {
+                myStream.getTracks().forEach(track => track.stop()); // Mikrofon ışığını söndürür
+            }
+            if (peers) {
+                Object.values(peers).forEach(call => call.close()); // Bağlantıları koparır
+            }
             
-            // 4. Sayfayı yenile (En temiz çıkış yöntemi)
+            // 3. Kendi ekranındaki 'IN VOICE' yazısını sil
+            const myElem = document.querySelector(`[data-username="${currentUsername}"]`);
+            if (myElem) {
+                const badge = myElem.querySelector('.voice-badge');
+                if (badge) badge.remove();
+            }
+
+            // 4. Butonu ESKİ HALİNE getir
+            const vBtn = document.getElementById('voiceBtn');
+            if (vBtn) {
+                vBtn.innerText = "JOIN VOICE";
+                vBtn.style.color = "";       
+                vBtn.style.borderColor = ""; 
+                vBtn.style.boxShadow = "";   
+                vBtn.disabled = false;       
+                vBtn.style.cursor = "pointer";
+            }
+
+            // 5. Kontrol panelini gizle
+            const actionsDiv = document.getElementById('voiceActions');
+            if (actionsDiv) actionsDiv.style.display = 'none';
+            
+            // 6. Sayfayı yenile (Tertemiz bir başlangıç için)
             location.reload(); 
         });
 
