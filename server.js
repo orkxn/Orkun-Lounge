@@ -17,6 +17,9 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const app = express();
 
+// Trust proxy for Render.com and other reverse proxies (needed for rate limiting)
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const io = new Server(server);
 
