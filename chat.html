@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
-            margin: 0; padding: 0; box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: 'Poppins', sans-serif;
         }
 
@@ -25,9 +28,9 @@
         /* --- ANA KONTEYNER (EKRANI KAPLAYAN YAPI) --- */
         .chat-wrapper {
             background-color: rgba(10, 10, 10, 0.95);
-            width: 95%; /* Ekranın %95'ini kaplar */
+            width: 95%;
             max-width: 1400px;
-            height: 90vh; /* Ekran yüksekliğinin %90'ı */
+            height: 90vh;
             display: flex;
             border-radius: 20px;
             overflow: hidden;
@@ -59,18 +62,72 @@
 
         .user-item {
             padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             font-size: 14px;
             display: flex;
             align-items: center;
             gap: 10px;
+            position: relative;
+            transition: background 0.2s;
         }
 
-        .online-dot {
-            width: 8px; height: 8px;
-            background: #00ff44;
+        .user-item:hover {
+            background: rgba(205, 0, 255, 0.1);
+            border-radius: 8px;
+            padding-left: 8px;
+            margin-left: -8px;
+        }
+
+        /* Status dots with different colors */
+        .status-dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            box-shadow: 0 0 10px #00ff44;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .status-dot.online {
+            background: #3ba55d;
+            box-shadow: 0 0 10px #3ba55d;
+        }
+
+        .status-dot.idle {
+            background: #faa81a;
+            box-shadow: 0 0 10px #faa81a;
+        }
+
+        .status-dot.dnd {
+            background: #ed4245;
+            box-shadow: 0 0 10px #ed4245;
+        }
+
+        .status-dot.invisible,
+        .status-dot.offline {
+            background: #747f8d;
+            box-shadow: none;
+        }
+
+        /* Speaking indicator glow */
+        .user-item.speaking {
+            background: rgba(59, 165, 93, 0.2);
+            border-radius: 8px;
+        }
+
+        .user-item.speaking .status-dot {
+            animation: speakingPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes speakingPulse {
+            from {
+                box-shadow: 0 0 5px #3ba55d;
+                transform: scale(1);
+            }
+
+            to {
+                box-shadow: 0 0 15px #3ba55d, 0 0 25px #3ba55d;
+                transform: scale(1.2);
+            }
         }
 
         /* --- SAĞ PANEL: CHAT ALANI --- */
@@ -89,28 +146,363 @@
             align-items: center;
         }
 
+        /* Status selector */
+        .status-selector {
+            position: relative;
+            display: inline-block;
+        }
+
+        .status-selector select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(205, 0, 255, 0.3);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            outline: none;
+        }
+
+        .status-selector select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+
         /* --- MESAJLAR --- */
         #messages {
             flex: 1;
             overflow-y: auto;
             padding-right: 15px;
-            margin-bottom: 25px;
+            margin-bottom: 10px;
         }
 
         .message-item {
             background: rgba(255, 255, 255, 0.03);
-            margin-bottom: 15px;
-            padding: 12px 18px;
-            border-radius: 15px;
-            max-width: 80%;
+            margin-bottom: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            max-width: 85%;
             border-left: 3px solid #cd00ff;
             animation: slideIn 0.3s ease-out;
+            position: relative;
+        }
+
+        .message-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .message-username {
+            font-weight: 600;
+            color: #cd00ff;
+        }
+
+        .message-timestamp {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .message-content {
+            color: #dcddde;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        /* Mentions */
+        .mention {
+            background: rgba(88, 101, 242, 0.3);
+            color: #dee0fc;
+            padding: 0 4px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .mention:hover {
+            background: rgba(88, 101, 242, 0.5);
+        }
+
+        /* Reactions */
+        .reactions-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .reaction {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        .reaction:hover {
+            background: rgba(205, 0, 255, 0.2);
+            border-color: rgba(205, 0, 255, 0.4);
+        }
+
+        .reaction.active {
+            background: rgba(205, 0, 255, 0.3);
+            border-color: #cd00ff;
+        }
+
+        .reaction-count {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Reaction picker on hover */
+        .reaction-picker {
+            position: absolute;
+            right: 10px;
+            top: -15px;
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(205, 0, 255, 0.3);
+            border-radius: 8px;
+            padding: 6px 8px;
+            display: none;
+            gap: 4px;
+            z-index: 10;
+        }
+
+        .message-item:hover .reaction-picker {
+            display: flex;
+        }
+
+        .reaction-picker button {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .reaction-picker button:hover {
+            background: rgba(205, 0, 255, 0.2);
+            transform: scale(1.2);
+        }
+
+        /* User avatars */
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #cd00ff, #5865f2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #fff;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-avatar.small {
+            width: 24px;
+            height: 24px;
+            font-size: 11px;
+        }
+
+        /* Message avatar in chat */
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+        }
+
+        /* Admin badge */
+        .admin-badge {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            margin-left: 6px;
+            text-transform: uppercase;
+        }
+
+        /* Delete message button */
+        .delete-msg-btn {
+            background: rgba(237, 66, 69, 0.2);
+            border: none;
+            color: #ed4245;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            margin-left: 10px;
+            opacity: 0;
+            transition: opacity 0.2s, background 0.2s;
+        }
+
+        .message-item:hover .delete-msg-btn {
+            opacity: 1;
+        }
+
+        .delete-msg-btn:hover {
+            background: rgba(237, 66, 69, 0.5);
+        }
+
+        /* Admin controls */
+        .admin-controls {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .admin-btn {
+            background: rgba(237, 66, 69, 0.2);
+            border: 1px solid rgba(237, 66, 69, 0.3);
+            color: #ed4245;
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .admin-btn:hover {
+            background: rgba(237, 66, 69, 0.4);
+        }
+
+        /* Avatar settings modal */
+        .avatar-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .avatar-modal.show {
+            display: flex;
+        }
+
+        .avatar-modal-content {
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(205, 0, 255, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            width: 400px;
+            max-width: 90%;
+        }
+
+        .avatar-modal-content h3 {
+            color: #cd00ff;
+            margin-bottom: 20px;
+        }
+
+        .avatar-modal-content input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(205, 0, 255, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        .avatar-modal-content .btn-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .avatar-modal-content button {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .avatar-modal-content .save-btn {
+            background: #cd00ff;
+            color: #000;
+        }
+
+        .avatar-modal-content .cancel-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            height: 20px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+        }
+
+        .typing-dots {
+            display: inline-flex;
+            gap: 3px;
+            margin-left: 6px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dots span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typingBounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.6);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* Mesaj Yazma Alanı Konteynırı */
         .input-area {
             display: flex;
-            align-items: center; /* Buton ve yazıyı hizalar */
+            align-items: center;
             gap: 10px;
             background: rgba(255, 255, 255, 0.05);
             padding: 10px 20px;
@@ -118,7 +510,6 @@
             border: 1px solid rgba(205, 0, 255, 0.3);
         }
 
-        /* Garip görünen textarea'yı şıklaştıralım */
         #messageInput {
             flex: 1;
             background: transparent;
@@ -126,13 +517,12 @@
             color: white;
             font-size: 15px;
             outline: none;
-            resize: none; /* Köşedeki çekme işaretini kaldırır */
+            resize: none;
             padding: 5px 0;
             max-height: 80px;
-            overflow-y: auto; /* Çok uzarsa scroll çıksın */
+            overflow-y: auto;
         }
 
-        /* Scrollbar'ı gizleyelim veya şıklaştıralım */
         #messageInput::-webkit-scrollbar {
             width: 0px;
         }
@@ -154,17 +544,26 @@
         }
 
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-10px); }
-            to { opacity: 1; transform: translateX(0); }
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         /* VOICE CONTROLS PANELİ (BOŞLUK EKLEME) */
         .voice-controls {
             width: 220px;
             padding: 20px;
-            background: rgba(15, 15, 15, 0.5); /* Sidebar'dan biraz daha farklı bir ton */
+            background: rgba(15, 15, 15, 0.5);
+            /* Sidebar'dan biraz daha farklı bir ton */
             border-right: 1px solid rgba(205, 0, 255, 0.1);
-            margin-left: 20px; /* ONLINE USERS kısmından sağa iten boşluk */
+            margin-left: 20px;
+            /* ONLINE USERS kısmından sağa iten boşluk */
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -176,50 +575,60 @@
             letter-spacing: 1px;
         }
 
-        
+
         .voice-badge {
-            color: #00ff44;     
-            font-size: 12px;    
-            font-weight: 700;    
-            margin-left: 8px;    
+            color: #00ff44;
+            font-size: 12px;
+            font-weight: 700;
+            margin-left: 8px;
             letter-spacing: 0.5px;
             vertical-align: middle;
-            
+
         }
 
         /* --- DASHBOARD GERİ DÖN BUTONU --- */
         .back-btn {
-            text-decoration: none;      /* Alt çizkiyi kaldır */
-            color: #cd00ff;            /* Mor yazı */
-            border: 1px solid #cd00ff; /* Mor çerçeve */
+            text-decoration: none;
+            /* Alt çizkiyi kaldır */
+            color: #cd00ff;
+            /* Mor yazı */
+            border: 1px solid #cd00ff;
+            /* Mor çerçeve */
             padding: 8px 15px;
-            border-radius: 20px;       /* Yuvarlak köşeler */
+            border-radius: 20px;
+            /* Yuvarlak köşeler */
             font-size: 13px;
             font-weight: 600;
-            margin-bottom: 20px;       /* Altındaki liste ile boşluk bırak */
+            margin-bottom: 20px;
+            /* Altındaki liste ile boşluk bırak */
             text-align: center;
             transition: all 0.3s ease;
-            display: flex;             /* Ok ve yazıyı hizalamak için */
+            display: flex;
+            /* Ok ve yazıyı hizalamak için */
             align-items: center;
             justify-content: center;
             gap: 8px;
         }
 
         .back-btn span {
-            font-size: 18px;           /* Ok işaretini biraz büyüt */
+            font-size: 18px;
+            /* Ok işaretini biraz büyüt */
             line-height: 1;
         }
 
         .back-btn:hover {
-            background: #cd00ff;       /* Üzerine gelince mor dolgu */
-            color: #000;               /* Yazı siyah olsun */
-            box-shadow: 0 0 15px rgba(205, 0, 255, 0.5); /* Neon parlama */
-            transform: translateX(-3px); /* Hafif sola kayma efekti */
+            background: #cd00ff;
+            /* Üzerine gelince mor dolgu */
+            color: #000;
+            /* Yazı siyah olsun */
+            box-shadow: 0 0 15px rgba(205, 0, 255, 0.5);
+            /* Neon parlama */
+            transform: translateX(-3px);
+            /* Hafif sola kayma efekti */
         }
-
-
     </style>
 </head>
+
 <body>
 
     <div class="chat-wrapper">
@@ -233,28 +642,65 @@
             </ul>
         </div>
 
-    <div class="voice-controls">
-    <h3>Voice Channel</h3>
-    <button id="voiceBtn" class="send-btn" style="width: 100%;">JOIN VOICE</button>
-    
-    <div id="voiceActions" style="display: none; margin-top: 15px; display: flex; justify-content: space-around; background: #111; padding: 10px; border-radius: 15px; border: 1px solid #2a003b;">
-        <button id="muteBtn" title="Mute/Unmute" style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎤</button>
-        <button id="deafenBtn" title="Deafen/Undeafen" style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎧</button>
-        <button id="leaveBtn" title="Leave Voice" style="background:none; border:none; cursor:pointer; color:#ff0044; font-size:18px;">❌</button>
-    </div>
-    </div>    
+        <div class="voice-controls">
+            <h3>Voice Channel</h3>
+            <button id="voiceBtn" class="send-btn" style="width: 100%;">JOIN VOICE</button>
+
+            <div id="voiceActions"
+                style="display: none; margin-top: 15px; display: flex; justify-content: space-around; background: #111; padding: 10px; border-radius: 15px; border: 1px solid #2a003b;">
+                <button id="muteBtn" title="Mute/Unmute"
+                    style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎤</button>
+                <button id="deafenBtn" title="Deafen/Undeafen"
+                    style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎧</button>
+                <button id="leaveBtn" title="Leave Voice"
+                    style="background:none; border:none; cursor:pointer; color:#ff0044; font-size:18px;">❌</button>
+            </div>
+        </div>
 
         <div class="main-chat">
             <div class="chat-header">
                 <h2>Lounge <span>Chat</span></h2>
-                <span id="status" style="color: #00ff44; font-size: 12px;">● Connected</span>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div class="user-avatar" id="myAvatar" style="cursor:pointer;" title="Change Avatar">
+                        <span id="myAvatarInitial">?</span>
+                    </div>
+                    <div class="status-selector">
+                        <select id="statusSelect">
+                            <option value="online">🟢 Online</option>
+                            <option value="idle">🟡 Idle</option>
+                            <option value="dnd">🔴 Do Not Disturb</option>
+                            <option value="invisible">⚫ Invisible</option>
+                        </select>
+                    </div>
+                    <div class="admin-controls" id="adminControls" style="display:none;">
+                        <button class="admin-btn" id="clearChatBtn">🗑️ Clear Chat</button>
+                    </div>
+                    <span id="status" style="color: #00ff44; font-size: 12px;">● Connected</span>
+                </div>
             </div>
 
             <div id="messages"></div>
 
+            <div class="typing-indicator" id="typingIndicator"></div>
+
             <div class="input-area">
-                <textarea id="messageInput" placeholder="Write something..." autocomplete="off" rows="1"></textarea>
-                <button class="send-btn" onclick="sendMessage()">SEND</button>
+                <textarea id="messageInput" placeholder="Write something... (use @username to mention)"
+                    autocomplete="off" rows="1"></textarea>
+                <button class="send-btn" id="sendBtn">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Modal -->
+    <div class="avatar-modal" id="avatarModal">
+        <div class="avatar-modal-content">
+            <h3>🖼️ Change Profile Picture</h3>
+            <p style="color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 15px;">Enter a URL to an image (PNG,
+                JPG, GIF)</p>
+            <input type="text" id="avatarUrlInput" placeholder="https://example.com/your-avatar.png">
+            <div class="btn-group">
+                <button class="cancel-btn" id="avatarCancelBtn">Cancel</button>
+                <button class="save-btn" id="avatarSaveBtn">Save</button>
             </div>
         </div>
     </div>
@@ -263,245 +709,601 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
         // --- 1. TANIMLAMALAR ---
-            const socket = io();
-            
-            // +++ PEERJS'İ KENDİ SUNUCUMUZA YÖNLENDİRİYORUZ +++
-            const peer = new Peer(undefined, {
-                host: '/',             // Kendi sunucumuz (Localhost veya Render)
-                path: '/peerjs',       // Server.js'de belirlediğimiz yol
-                port: location.port || (location.protocol === 'https:' ? 443 : 80),
-                secure: location.protocol === 'https:', // HTTPS ise güvenli, değilse normal
-                debug: 2,
-                config: {
-                    'iceServers': [
-                        { url: 'stun:stun.l.google.com:19302' }, 
-                        { url: 'stun:stun1.l.google.com:19302' }
-                    ]
-                }
-            });
-            // ++++++++++++++++++++++++++++++++++++++++++++++++
-            
-            let currentUsername = "";
-            let myStream;
-            let isMuted = false;
-            let isDeafened = false;
-            const peers = {}; 
+        const socket = io();
 
-            // --- 2. BAŞLANGIÇ AYARLARI (BUTONU KİLİTLE) ---
-            const voiceBtn = document.getElementById('voiceBtn');
-            
-            if (voiceBtn) {
-                voiceBtn.disabled = true;
-                voiceBtn.innerText = "Connecting...";
-                voiceBtn.style.opacity = "0.5";
-                voiceBtn.style.cursor = "not-allowed";
+        // +++ PEERJS'İ KENDİ SUNUCUMUZA YÖNLENDİRİYORUZ +++
+        const peer = new Peer(undefined, {
+            host: '/',
+            path: '/peerjs',
+            port: location.port || (location.protocol === 'https:' ? 443 : 80),
+            secure: location.protocol === 'https:',
+            debug: 2,
+            config: {
+                'iceServers': [
+                    { url: 'stun:stun.l.google.com:19302' },
+                    { url: 'stun:stun1.l.google.com:19302' }
+                ]
             }
+        });
 
-            // --- 3. KİMLİK TESPİTİ ---
-            fetch('/api/userinfo')
+        let currentUsername = "";
+        let isAdmin = false;
+        let myAvatar = null;
+        let myStream;
+        let isMuted = false;
+        let isDeafened = false;
+        const peers = {};
+        const userStatuses = {};
+        const userAvatars = {};  // Track all user avatars
+        const typingUsers = new Set();
+        const messageReactions = {};
+        let typingTimeout = null;
+
+        // --- 2. BAŞLANGIÇ AYARLARI (BUTONU KİLİTLE) ---
+        const voiceBtn = document.getElementById('voiceBtn');
+
+        if (voiceBtn) {
+            voiceBtn.disabled = true;
+            voiceBtn.innerText = "Connecting...";
+            voiceBtn.style.opacity = "0.5";
+            voiceBtn.style.cursor = "not-allowed";
+        }
+
+        // --- 3. KİMLİK TESPİTİ ve MESAJ GEÇMİŞİ ---
+        fetch('/api/userinfo')
+            .then(res => res.json())
+            .then(data => {
+                currentUsername = data.username;
+                isAdmin = data.isAdmin || false;
+                myAvatar = data.avatar;
+
+                // Update my avatar display
+                updateMyAvatarDisplay();
+
+                // Show admin controls if admin
+                if (isAdmin) {
+                    document.getElementById('adminControls').style.display = 'flex';
+                }
+
+                socket.emit('user_joined', currentUsername);
+                loadUserAvatars();
+                loadMessageHistory();
+            })
+            .catch(err => console.error("Kullanıcı bilgisi alınamadı:", err));
+
+        // Load all user avatars
+        function loadUserAvatars() {
+            fetch('/api/users')
+                .then(res => res.json())
+                .then(users => {
+                    Object.entries(users).forEach(([username, data]) => {
+                        userAvatars[username] = data.avatar;
+                    });
+                })
+                .catch(err => console.error("Error loading avatars:", err));
+        }
+
+        // Update my avatar display in header
+        function updateMyAvatarDisplay() {
+            const avatarEl = document.getElementById('myAvatar');
+            const initialEl = document.getElementById('myAvatarInitial');
+
+            if (myAvatar) {
+                avatarEl.innerHTML = `<img src="${myAvatar}" alt="Avatar" onerror="this.parentElement.innerHTML='<span>${currentUsername.charAt(0).toUpperCase()}</span>'">`;
+            } else {
+                initialEl.textContent = currentUsername ? currentUsername.charAt(0).toUpperCase() : '?';
+            }
+        }
+
+        // Avatar modal functions
+        function openAvatarModal() {
+            document.getElementById('avatarModal').classList.add('show');
+            document.getElementById('avatarUrlInput').value = myAvatar || '';
+        }
+
+        function closeAvatarModal() {
+            document.getElementById('avatarModal').classList.remove('show');
+        }
+
+        function saveAvatar() {
+            const url = document.getElementById('avatarUrlInput').value.trim();
+
+            fetch('/api/avatar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ avatarUrl: url })
+            })
                 .then(res => res.json())
                 .then(data => {
-                    currentUsername = data.username;
-                    socket.emit('user_joined', currentUsername);
+                    if (data.success) {
+                        myAvatar = data.avatarUrl;
+                        userAvatars[currentUsername] = myAvatar;
+                        updateMyAvatarDisplay();
+                        closeAvatarModal();
+                    } else {
+                        alert(data.error || 'Failed to update avatar');
+                    }
                 })
-                .catch(err => console.error("Kullanıcı bilgisi alınamadı:", err));
+                .catch(err => {
+                    console.error('Error saving avatar:', err);
+                    alert('Failed to save avatar');
+                });
+        }
 
-            // --- 4. PEERJS BAĞLANTISI ---
-            
-            peer.on('open', (id) => {
-                console.log('✅ PeerJS Sunucuna Bağlandı. ID:', id);
-                
-                if (voiceBtn) {
-                    voiceBtn.disabled = false;
-                    voiceBtn.innerText = "JOIN VOICE";
-                    voiceBtn.style.opacity = "1";
-                    voiceBtn.style.cursor = "pointer";
-                }
-            });
-            
-            peer.on('error', (err) => {
-                console.error('❌ PeerJS Hatası:', err);
-                if (voiceBtn) {
-                    voiceBtn.innerText = "Error!";
-                    alert("Ses hatası. Lütfen sayfayı yenileyin.");
-                }
-            });
-
-            // --- 5. MESAJLAŞMA ---
-            function sendMessage() {
-                const input = document.getElementById('messageInput');
-                if (input.value.trim() && currentUsername) {
-                    socket.emit('chat_message', { user: currentUsername, text: input.value });
-                    input.value = '';
-                }
+        // Admin: Clear all chat
+        function clearAllChat() {
+            if (!isAdmin) return;
+            if (confirm('Are you sure you want to delete ALL messages? This cannot be undone.')) {
+                socket.emit('admin_action', { action: 'clear_chat' });
             }
+        }
 
-            document.getElementById('messageInput').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
+        // Event listeners (CSP-compliant - no inline onclick)
+        document.getElementById('myAvatar').addEventListener('click', openAvatarModal);
+        document.getElementById('avatarCancelBtn').addEventListener('click', closeAvatarModal);
+        document.getElementById('avatarSaveBtn').addEventListener('click', saveAvatar);
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('clearChatBtn').addEventListener('click', clearAllChat);
 
-            socket.on('new_message', (data) => {
-                const msgDiv = document.createElement('div');
-                msgDiv.className = 'message-item';
-                const formattedText = data.text.replace(/\n/g, '<br>');
-                msgDiv.innerHTML = `<strong>${data.user}</strong><br>${formattedText}`;
-                const container = document.getElementById('messages');
-                container.appendChild(msgDiv);
-                container.scrollTop = container.scrollHeight;
-            });
+        // Load message history from database
+        function loadMessageHistory() {
+            fetch('/api/messages')
+                .then(res => res.json())
+                .then(messages => {
+                    messages.forEach(msg => {
+                        displayMessage({
+                            id: msg.id,
+                            user: msg.username,
+                            text: msg.content,
+                            timestamp: msg.created_at
+                        }, false);
+                    });
+                    const container = document.getElementById('messages');
+                    container.scrollTop = container.scrollHeight;
+                })
+                .catch(err => console.error("Error loading messages:", err));
+        }
 
-            // --- GÜNCELLENMİŞ KULLANICI LİSTESİ ---
-            socket.on('update_user_list', (users) => {
-                const userList = document.getElementById('userList');
-                userList.innerHTML = ''; 
-                
-                users.forEach(user => {
-                    const alreadyExists = userList.querySelector(`[data-username="${user}"]`);
-                    if (alreadyExists) return;
+        // --- 4. PEERJS BAĞLANTISI ---
 
-                    const li = document.createElement('li');
-                    li.className = 'user-item';
-                    li.setAttribute('data-username', user); 
+        peer.on('open', (id) => {
+            console.log('✅ PeerJS Sunucuna Bağlandı. ID:', id);
 
-                    const isMe = user === currentUsername ? ' <span style="opacity:0.5;">(You)</span>' : '';
-                    li.innerHTML = `<span class="online-dot"></span> ${user}${isMe}`;
-                    userList.appendChild(li);
-                });
-            });
-
-            // Sayfa yenilendiğinde sestekileri görüp yeşil rozet takar
-            socket.on('current_voice_users', (voiceUsersList) => {
-                voiceUsersList.forEach(username => {
-                    const userElement = document.querySelector(`[data-username="${username}"]`);
-                    
-                    // Eğer kullanıcı listede varsa ve henüz rozeti yoksa ekle
-                    if (userElement && !userElement.querySelector('.voice-badge')) {
-                        const badge = document.createElement('span');
-                        badge.className = 'voice-badge';
-                        badge.innerText = ' IN VOICE';
-                        userElement.appendChild(badge);
-                    }
-                });
-            });
-
-            socket.on('user-voice-status', (data) => {
-                let userElement = document.querySelector(`[data-username="${data.username}"]`);
-
-                if (userElement) {
-                    const oldBadge = userElement.querySelector('.voice-badge');
-                    if (oldBadge) oldBadge.remove();
-
-                    if (data.inVoice) {
-                        const badge = document.createElement('span');
-                        badge.className = 'voice-badge';
-                        badge.innerText = ' IN VOICE';
-                        userElement.appendChild(badge);
-                    }
-                }
-            });
-
-
-            // --- 6. SESLİ SOHBET KONTROLLERİ ---
-            
             if (voiceBtn) {
-                voiceBtn.addEventListener('click', async () => {
-                    if (!peer || !peer.id) return;
+                voiceBtn.disabled = false;
+                voiceBtn.innerText = "JOIN VOICE";
+                voiceBtn.style.opacity = "1";
+                voiceBtn.style.cursor = "pointer";
+            }
+        });
 
-                    try {
-                        myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                        
-                        voiceBtn.innerText = "ON VOICE";
-                        voiceBtn.style.color = "#00ff44";
-                        voiceBtn.style.borderColor = "#00ff44";
-                        voiceBtn.style.boxShadow = "0 0 15px rgba(0, 255, 68, 0.4)";
-                        voiceBtn.disabled = true;
-                        voiceBtn.style.cursor = "default";
+        peer.on('error', (err) => {
+            console.error('❌ PeerJS Hatası:', err);
+            if (voiceBtn) {
+                voiceBtn.innerText = "Error!";
+                alert("Ses hatası. Lütfen sayfayı yenileyin.");
+            }
+        });
 
-                        const actionsDiv = document.getElementById('voiceActions');
-                        if(actionsDiv) actionsDiv.style.display = 'flex';
+        // --- 5. MESAJLAŞMA ---
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            if (input.value.trim() && currentUsername) {
+                socket.emit('chat_message', { user: currentUsername, text: input.value });
+                socket.emit('typing_stop');
+                input.value = '';
+            }
+        }
 
-                        socket.emit('join-voice', { 
-                            peerId: peer.id, 
-                            username: currentUsername 
-                        });
+        // Typing indicator handling
+        const messageInput = document.getElementById('messageInput');
+        messageInput.addEventListener('input', () => {
+            socket.emit('typing_start');
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                socket.emit('typing_stop');
+            }, 2000);
+        });
 
-                        // Kendine Badge Ekle
-                        const myUserElement = document.querySelector(`[data-username="${currentUsername}"]`);
-                        if (myUserElement) {
-                            const oldBadge = myUserElement.querySelector('.voice-badge');
-                            if (oldBadge) oldBadge.remove();
-                            const badge = document.createElement('span');
-                            badge.className = 'voice-badge';
-                            badge.innerText = ' IN VOICE';
-                            myUserElement.appendChild(badge);
-                        }
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
 
-                    } catch (err) {
-                        console.error("Mikrofon hatası:", err);
-                        alert("Mikrofon hatası! İzinleri kontrol edin.");
+        // Status selector
+        document.getElementById('statusSelect').addEventListener('change', (e) => {
+            socket.emit('status_change', e.target.value);
+        });
+
+        // Format timestamp
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const isYesterday = date.toDateString() === yesterday.toDateString();
+
+            const time = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+            if (isToday) return `Today at ${time}`;
+            if (isYesterday) return `Yesterday at ${time}`;
+            return `${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${time}`;
+        }
+
+        // Parse mentions in text
+        function parseMentions(text) {
+            return text.replace(/@(\w+)/g, '<span class="mention">@$1</span>');
+        }
+
+        // Escape HTML to prevent XSS attacks
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Display message with all features
+        function displayMessage(data, animate = true) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message-item';
+            if (!animate) msgDiv.style.animation = 'none';
+            msgDiv.setAttribute('data-message-id', data.id);
+            msgDiv.setAttribute('data-owner', data.user);
+
+            // SECURITY: Escape HTML first, then parse mentions and newlines
+            const safeText = escapeHtml(data.text);
+            const formattedText = parseMentions(safeText.replace(/\n/g, '<br>'));
+            const timestamp = data.timestamp ? formatTimestamp(data.timestamp) : formatTimestamp(new Date());
+
+            // Get avatar for user
+            const avatar = userAvatars[data.user];
+            const avatarHtml = avatar
+                ? `<img src="${avatar}" alt="" onerror="this.parentElement.innerHTML='<span>${data.user.charAt(0).toUpperCase()}</span>'">`
+                : `<span>${data.user.charAt(0).toUpperCase()}</span>`;
+
+            // Admin badge
+            const adminBadge = data.user.toLowerCase() === 'admin' ? '<span class="admin-badge">Admin</span>' : '';
+
+            // Delete button (show for own messages or if current user is admin)
+            const canDelete = data.user === currentUsername || isAdmin;
+            // Use escaped username for safety
+            const safeUsername = escapeHtml(data.user);
+            const deleteBtn = canDelete
+                ? `<button class="delete-msg-btn" data-msgid="${data.id}" data-owner="${safeUsername}">🗑️ Delete</button>`
+                : '';
+
+            msgDiv.innerHTML = `
+                <div class="reaction-picker">
+                    <button class="emoji-btn" data-msgid="${data.id}" data-emoji="👍">👍</button>
+                    <button class="emoji-btn" data-msgid="${data.id}" data-emoji="❤️">❤️</button>
+                    <button class="emoji-btn" data-msgid="${data.id}" data-emoji="😂">😂</button>
+                    <button class="emoji-btn" data-msgid="${data.id}" data-emoji="😮">😮</button>
+                    <button class="emoji-btn" data-msgid="${data.id}" data-emoji="😢">😢</button>
+                    <button class="emoji-btn" data-msgid="${data.id}" data-emoji="🔥">🔥</button>
+                </div>
+                <div style="display: flex; gap: 12px;">
+                    <div class="user-avatar message-avatar">${avatarHtml}</div>
+                    <div style="flex: 1;">
+                        <div class="message-header">
+                            <span class="message-username">${safeUsername}</span>${adminBadge}
+                            <span class="message-timestamp">${timestamp}</span>
+                            ${deleteBtn}
+                        </div>
+                        <div class="message-content">${formattedText}</div>
+                    </div>
+                </div>
+                <div class="reactions-container" id="reactions-${data.id}"></div>
+            `;
+
+            // Add event listeners for emoji buttons
+            msgDiv.querySelectorAll('.emoji-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    toggleReaction(this.dataset.msgid, this.dataset.emoji);
+                });
+            });
+
+            // Add event listener for delete button
+            const delBtn = msgDiv.querySelector('.delete-msg-btn');
+            if (delBtn) {
+                delBtn.addEventListener('click', function () {
+                    deleteMessage(this.dataset.msgid, this.dataset.owner);
+                });
+            }
+
+            const container = document.getElementById('messages');
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+
+            // Check if current user is mentioned
+            if (data.text.includes(`@${currentUsername}`)) {
+                msgDiv.style.background = 'rgba(88, 101, 242, 0.15)';
+            }
+        }
+
+        // Toggle reaction (add if not exists, remove if exists)
+        function toggleReaction(messageId, emoji) {
+            socket.emit('toggle_reaction', { messageId, emoji });
+        }
+
+        // Delete message
+        function deleteMessage(messageId, messageOwner) {
+            if (confirm('Delete this message?')) {
+                socket.emit('delete_message', { messageId, messageOwner });
+            }
+        }
+
+        socket.on('new_message', (data) => {
+            displayMessage(data);
+        });
+
+        // Message deleted handler
+        socket.on('message_deleted', (data) => {
+            const msgEl = document.querySelector(`[data-message-id="${data.messageId}"]`);
+            if (msgEl) {
+                msgEl.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => msgEl.remove(), 300);
+            }
+        });
+
+        // Chat cleared handler (admin action)
+        socket.on('chat_cleared', () => {
+            document.getElementById('messages').innerHTML = '';
+        });
+
+        // Typing indicator
+        socket.on('user_typing', (data) => {
+            if (data.isTyping) {
+                typingUsers.add(data.username);
+            } else {
+                typingUsers.delete(data.username);
+            }
+            updateTypingIndicator();
+        });
+
+        function updateTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            const users = Array.from(typingUsers);
+
+            if (users.length === 0) {
+                indicator.innerHTML = '';
+            } else if (users.length === 1) {
+                indicator.innerHTML = `${users[0]} is typing<span class="typing-dots"><span></span><span></span><span></span></span>`;
+            } else if (users.length === 2) {
+                indicator.innerHTML = `${users[0]} and ${users[1]} are typing<span class="typing-dots"><span></span><span></span><span></span></span>`;
+            } else {
+                indicator.innerHTML = `Several people are typing<span class="typing-dots"><span></span><span></span><span></span></span>`;
+            }
+        }
+
+        // Reactions handling - toggle (add/remove)
+        socket.on('reaction_toggled', (data) => {
+            const reactionsContainer = document.getElementById(`reactions-${data.messageId}`);
+            if (!reactionsContainer) return;
+
+            if (!messageReactions[data.messageId]) {
+                messageReactions[data.messageId] = {};
+            }
+            if (!messageReactions[data.messageId][data.emoji]) {
+                messageReactions[data.messageId][data.emoji] = new Set();
+            }
+
+            // Toggle: add if not present, remove if present
+            if (messageReactions[data.messageId][data.emoji].has(data.username)) {
+                messageReactions[data.messageId][data.emoji].delete(data.username);
+                // Remove empty emoji sets
+                if (messageReactions[data.messageId][data.emoji].size === 0) {
+                    delete messageReactions[data.messageId][data.emoji];
+                }
+            } else {
+                messageReactions[data.messageId][data.emoji].add(data.username);
+            }
+
+            updateReactionsDisplay(data.messageId);
+        });
+
+        function updateReactionsDisplay(messageId) {
+            const container = document.getElementById(`reactions-${messageId}`);
+            if (!container) return;
+
+            if (!messageReactions[messageId] || Object.keys(messageReactions[messageId]).length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            container.innerHTML = '';
+            Object.entries(messageReactions[messageId]).forEach(([emoji, users]) => {
+                if (users.size === 0) return;
+                const reactionEl = document.createElement('div');
+                reactionEl.className = 'reaction' + (users.has(currentUsername) ? ' active' : '');
+                reactionEl.innerHTML = `${emoji} <span class="reaction-count">${users.size}</span>`;
+                reactionEl.onclick = () => toggleReaction(messageId, emoji);
+                container.appendChild(reactionEl);
+            });
+        }
+
+        // User status updates
+        socket.on('all_user_status', (statuses) => {
+            Object.assign(userStatuses, statuses);
+        });
+
+        socket.on('user_status_update', (data) => {
+            userStatuses[data.username] = data.status;
+            updateUserStatusDot(data.username, data.status);
+        });
+
+        function updateUserStatusDot(username, status) {
+            const userElement = document.querySelector(`[data-username="${username}"]`);
+            if (userElement) {
+                const dot = userElement.querySelector('.status-dot');
+                if (dot) {
+                    dot.className = `status-dot ${status}`;
+                }
+            }
+        }
+
+        // Speaking indicator
+        socket.on('user_speaking', (data) => {
+            const userElement = document.querySelector(`[data-username="${data.username}"]`);
+            if (userElement) {
+                if (data.isSpeaking) {
+                    userElement.classList.add('speaking');
+                } else {
+                    userElement.classList.remove('speaking');
+                }
+            }
+        });
+
+        // --- GÜNCELLENMİŞ KULLANICI LİSTESİ ---
+        socket.on('update_user_list', (users) => {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.className = 'user-item';
+                li.setAttribute('data-username', user);
+
+                const status = userStatuses[user] || 'online';
+                const isMe = user === currentUsername ? ' <span style="opacity:0.5;">(You)</span>' : '';
+                li.innerHTML = `<span class="status-dot ${status}"></span> ${user}${isMe}`;
+                userList.appendChild(li);
+            });
+        });
+
+        // Sayfa yenilendiğinde sestekileri görüp yeşil rozet takar
+        socket.on('current_voice_users', (voiceUsersList) => {
+            voiceUsersList.forEach(username => {
+                const userElement = document.querySelector(`[data-username="${username}"]`);
+
+                // Eğer kullanıcı listede varsa ve henüz rozeti yoksa ekle
+                if (userElement && !userElement.querySelector('.voice-badge')) {
+                    const badge = document.createElement('span');
+                    badge.className = 'voice-badge';
+                    badge.innerText = ' IN VOICE';
+                    userElement.appendChild(badge);
+                }
+            });
+        });
+
+        socket.on('user-voice-status', (data) => {
+            let userElement = document.querySelector(`[data-username="${data.username}"]`);
+
+            if (userElement) {
+                const oldBadge = userElement.querySelector('.voice-badge');
+                if (oldBadge) oldBadge.remove();
+
+                if (data.inVoice) {
+                    const badge = document.createElement('span');
+                    badge.className = 'voice-badge';
+                    badge.innerText = ' IN VOICE';
+                    userElement.appendChild(badge);
+                }
+            }
+        });
+
+
+        // --- 6. SESLİ SOHBET KONTROLLERİ ---
+
+        if (voiceBtn) {
+            voiceBtn.addEventListener('click', async () => {
+                if (!peer || !peer.id) return;
+
+                try {
+                    myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    voiceBtn.innerText = "ON VOICE";
+                    voiceBtn.style.color = "#00ff44";
+                    voiceBtn.style.borderColor = "#00ff44";
+                    voiceBtn.style.boxShadow = "0 0 15px rgba(0, 255, 68, 0.4)";
+                    voiceBtn.disabled = true;
+                    voiceBtn.style.cursor = "default";
+
+                    const actionsDiv = document.getElementById('voiceActions');
+                    if (actionsDiv) actionsDiv.style.display = 'flex';
+
+                    socket.emit('join-voice', {
+                        peerId: peer.id,
+                        username: currentUsername
+                    });
+
+                    // Kendine Badge Ekle
+                    const myUserElement = document.querySelector(`[data-username="${currentUsername}"]`);
+                    if (myUserElement) {
+                        const oldBadge = myUserElement.querySelector('.voice-badge');
+                        if (oldBadge) oldBadge.remove();
+                        const badge = document.createElement('span');
+                        badge.className = 'voice-badge';
+                        badge.innerText = ' IN VOICE';
+                        myUserElement.appendChild(badge);
                     }
-                });
-            }
 
-            // ARAMA CEVAPLAMA
-            peer.on('call', (call) => {
-                call.answer(myStream);
-                const audio = document.createElement('audio');
-                call.on('stream', (userStream) => {
-                    addAudioStream(audio, userStream);
-                    if (isDeafened) audio.muted = true;
-                });
-                peers[call.peer] = call;
+                } catch (err) {
+                    console.error("Mikrofon hatası:", err);
+                    alert("Mikrofon hatası! İzinleri kontrol edin.");
+                }
             });
+        }
 
-            // YENİ KULLANICI GELDİĞİNDE
-            socket.on('user-joined-voice', (data) => {
-                if (data.peerId === peer.id) return; 
-
-                const call = peer.call(data.peerId, myStream);
-                const audio = document.createElement('audio');
-                call.on('stream', (userStream) => {
-                    addAudioStream(audio, userStream);
-                    if (isDeafened) audio.muted = true;
-                });
-                peers[data.peerId] = call;
+        // ARAMA CEVAPLAMA
+        peer.on('call', (call) => {
+            call.answer(myStream);
+            const audio = document.createElement('audio');
+            call.on('stream', (userStream) => {
+                addAudioStream(audio, userStream);
+                if (isDeafened) audio.muted = true;
             });
+            peers[call.peer] = call;
+        });
 
-            // BUTONLAR
-            document.getElementById('muteBtn').addEventListener('click', () => {
-                if (!myStream) return;
-                isMuted = !isMuted;
-                myStream.getAudioTracks()[0].enabled = !isMuted;
-                const btn = document.getElementById('muteBtn');
-                btn.innerText = isMuted ? "🔇" : "🎤";
-                btn.style.color = isMuted ? "#ff0044" : "#cd00ff";
+        // YENİ KULLANICI GELDİĞİNDE
+        socket.on('user-joined-voice', (data) => {
+            if (data.peerId === peer.id) return;
+
+            const call = peer.call(data.peerId, myStream);
+            const audio = document.createElement('audio');
+            call.on('stream', (userStream) => {
+                addAudioStream(audio, userStream);
+                if (isDeafened) audio.muted = true;
             });
+            peers[data.peerId] = call;
+        });
 
-            document.getElementById('deafenBtn').addEventListener('click', () => {
-                isDeafened = !isDeafened;
-                document.querySelectorAll('audio').forEach(audio => audio.muted = isDeafened);
-                const btn = document.getElementById('deafenBtn');
-                btn.innerText = isDeafened ? "🚫" : "🎧";
-                btn.style.color = isDeafened ? "#ff0044" : "#cd00ff";
+        // BUTONLAR
+        document.getElementById('muteBtn').addEventListener('click', () => {
+            if (!myStream) return;
+            isMuted = !isMuted;
+            myStream.getAudioTracks()[0].enabled = !isMuted;
+            const btn = document.getElementById('muteBtn');
+            btn.innerText = isMuted ? "🔇" : "🎤";
+            btn.style.color = isMuted ? "#ff0044" : "#cd00ff";
+        });
+
+        document.getElementById('deafenBtn').addEventListener('click', () => {
+            isDeafened = !isDeafened;
+            document.querySelectorAll('audio').forEach(audio => audio.muted = isDeafened);
+            const btn = document.getElementById('deafenBtn');
+            btn.innerText = isDeafened ? "🚫" : "🎧";
+            btn.style.color = isDeafened ? "#ff0044" : "#cd00ff";
+        });
+
+        document.getElementById('leaveBtn').addEventListener('click', () => {
+            if (typeof socket !== 'undefined') socket.emit('leave-voice', { username: currentUsername });
+            if (myStream) myStream.getTracks().forEach(track => track.stop());
+            Object.values(peers).forEach(call => call.close());
+            location.reload();
+        });
+
+        function addAudioStream(audio, stream) {
+            audio.srcObject = stream;
+            audio.addEventListener('loadedmetadata', () => {
+                audio.play();
             });
-
-            document.getElementById('leaveBtn').addEventListener('click', () => {
-                if (typeof socket !== 'undefined') socket.emit('leave-voice', { username: currentUsername });
-                if (myStream) myStream.getTracks().forEach(track => track.stop());
-                Object.values(peers).forEach(call => call.close());
-                location.reload(); 
-            });
-
-            function addAudioStream(audio, stream) {
-                audio.srcObject = stream;
-                audio.addEventListener('loadedmetadata', () => {
-                    audio.play();
-                });
-                document.body.append(audio);
-            }
-        </script>
+            document.body.append(audio);
+        }
+    </script>
 </body>
+
 </html>
