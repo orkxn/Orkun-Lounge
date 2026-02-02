@@ -626,6 +626,300 @@
             transform: translateX(-3px);
             /* Hafif sola kayma efekti */
         }
+
+        /* Notification Toast Styles */
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 400px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .notification-toast.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #f87171;
+        }
+
+        .notification-toast.success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+        }
+
+        .notification-toast.warning {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+
+        .notification-toast.info {
+            background: rgba(205, 0, 255, 0.15);
+            border: 1px solid rgba(205, 0, 255, 0.4);
+            color: #cd00ff;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+
+            to {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+        }
+
+        /* Confirmation Modal Styles */
+        .confirm-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10001;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-modal.show {
+            display: flex;
+        }
+
+        .confirm-modal-content {
+            background: rgba(20, 20, 20, 0.98);
+            border: 1px solid rgba(205, 0, 255, 0.3);
+            border-radius: 16px;
+            padding: 24px 32px;
+            max-width: 400px;
+            text-align: center;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9) translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .confirm-modal-content h3 {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .confirm-modal-content p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .confirm-btn-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .confirm-btn-no {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .confirm-btn-no:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .confirm-btn-yes {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            border: none;
+            color: #fff;
+        }
+
+        .confirm-btn-yes:hover {
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Screen Share Styles */
+        .screenshare-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #cd00ff;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .screenshare-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .screenshare-btn.active {
+            color: #00ff44;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Screen Share Status Indicator */
+        .screenshare-status {
+            display: none;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 255, 68, 0.1);
+            border: 1px solid rgba(0, 255, 68, 0.3);
+            border-radius: 10px;
+            color: #00ff44;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .screenshare-status.show {
+            display: block;
+        }
+
+        .screenshare-status .watch-btn {
+            background: #00ff44;
+            color: #000;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        .screenshare-status .watch-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 255, 68, 0.4);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Screen Share Viewer Modal */
+        .screenshare-viewer {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .screenshare-viewer.show {
+            display: flex;
+        }
+
+        .screenshare-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(20, 20, 20, 0.9);
+            border-bottom: 1px solid rgba(205, 0, 255, 0.3);
+        }
+
+        .screenshare-header h4 {
+            color: #fff;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .screenshare-header h4 .sharing-indicator {
+            width: 10px;
+            height: 10px;
+            background: #00ff44;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        .screenshare-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .screenshare-close:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .screenshare-video-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .screenshare-video-container video {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 12px;
+            box-shadow: 0 0 40px rgba(205, 0, 255, 0.3);
+        }
     </style>
 </head>
 
@@ -652,8 +946,16 @@
                     style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎤</button>
                 <button id="deafenBtn" title="Deafen/Undeafen"
                     style="background:none; border:none; cursor:pointer; color:#cd00ff; font-size:18px;">🎧</button>
+                <button id="screenshareBtn" class="screenshare-btn" title="Share Screen">🖥️</button>
                 <button id="leaveBtn" title="Leave Voice"
                     style="background:none; border:none; cursor:pointer; color:#ff0044; font-size:18px;">❌</button>
+            </div>
+
+            <!-- Screen Share Status Indicator -->
+            <div class="screenshare-status" id="screenshareStatus">
+                🖥️ <span id="screenshareStatusText">Someone is sharing</span>
+                <br>
+                <button class="watch-btn" id="watchScreenBtn">Watch Stream</button>
             </div>
         </div>
 
@@ -705,11 +1007,82 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal (replaces confirm() dialogs) -->
+    <div class="confirm-modal" id="confirmModal">
+        <div class="confirm-modal-content">
+            <h3 id="confirmTitle">⚠️ Confirm Action</h3>
+            <p id="confirmMessage">Are you sure you want to proceed?</p>
+            <div class="confirm-btn-group">
+                <button class="confirm-btn-no" id="confirmNoBtn">No</button>
+                <button class="confirm-btn-yes" id="confirmYesBtn">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screen Share Viewer Modal -->
+    <div class="screenshare-viewer" id="screenshareViewer">
+        <div class="screenshare-header">
+            <h4><span class="sharing-indicator"></span> <span id="sharingUsername">Someone</span> is sharing their
+                screen</h4>
+            <button class="screenshare-close" id="screenshareCloseBtn">Minimize</button>
+        </div>
+        <div class="screenshare-video-container">
+            <video id="screenshareVideo" autoplay playsinline></video>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <script>
         // --- 1. TANIMLAMALAR ---
         const socket = io();
+
+        // Notification system to replace alert() - prevents desktop app crashes
+        function showNotification(message, type = 'error', duration = 5000) {
+            // Remove existing notifications
+            const existing = document.querySelector('.notification-toast');
+            if (existing) existing.remove();
+
+            const notification = document.createElement('div');
+            notification.className = `notification-toast ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Auto-remove after duration
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out forwards';
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+
+            // Return for JSON response compatibility
+            return { success: false, message: message };
+        }
+
+        // Confirmation modal system to replace confirm() - prevents desktop app crashes
+        let confirmCallback = null;
+
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirmTitle').textContent = title;
+            document.getElementById('confirmMessage').textContent = message;
+            confirmCallback = onConfirm;
+            document.getElementById('confirmModal').classList.add('show');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.remove('show');
+            confirmCallback = null;
+        }
+
+        document.getElementById('confirmNoBtn').addEventListener('click', closeConfirmModal);
+        document.getElementById('confirmYesBtn').addEventListener('click', () => {
+            if (confirmCallback) confirmCallback();
+            closeConfirmModal();
+        });
+
+        // Close modal when clicking outside
+        document.getElementById('confirmModal').addEventListener('click', (e) => {
+            if (e.target.id === 'confirmModal') closeConfirmModal();
+        });
 
         // +++ PEERJS'İ KENDİ SUNUCUMUZA YÖNLENDİRİYORUZ +++
         const peer = new Peer(undefined, {
@@ -738,6 +1111,13 @@
         const typingUsers = new Set();
         const messageReactions = {};
         let typingTimeout = null;
+
+        // Screen share variables
+        let screenStream = null;
+        let isScreenSharing = false;
+        let currentScreenSharer = null;
+        const screenSharePeers = {};
+        const pendingScreenShareRequests = new Set(); // Track peers requesting screen share
 
         // --- 2. BAŞLANGIÇ AYARLARI (BUTONU KİLİTLE) ---
         const voiceBtn = document.getElementById('voiceBtn');
@@ -818,24 +1198,27 @@
                     if (data.success) {
                         myAvatar = data.avatarUrl;
                         userAvatars[currentUsername] = myAvatar;
+                        showNotification('Avatar updated successfully!', 'success');
                         updateMyAvatarDisplay();
                         closeAvatarModal();
                     } else {
-                        alert(data.error || 'Failed to update avatar');
+                        showNotification(data.error || 'Failed to update avatar', 'error');
                     }
                 })
                 .catch(err => {
                     console.error('Error saving avatar:', err);
-                    alert('Failed to save avatar');
+                    showNotification('Failed to save avatar', 'error');
                 });
         }
 
         // Admin: Clear all chat
         function clearAllChat() {
             if (!isAdmin) return;
-            if (confirm('Are you sure you want to delete ALL messages? This cannot be undone.')) {
-                socket.emit('admin_action', { action: 'clear_chat' });
-            }
+            showConfirmModal(
+                '🗑️ Clear All Messages',
+                'Are you sure you want to delete ALL messages? This cannot be undone.',
+                () => socket.emit('admin_action', { action: 'clear_chat' })
+            );
         }
 
         // Event listeners (CSP-compliant - no inline onclick)
@@ -881,7 +1264,7 @@
             console.error('❌ PeerJS Hatası:', err);
             if (voiceBtn) {
                 voiceBtn.innerText = "Error!";
-                alert("Ses hatası. Lütfen sayfayı yenileyin.");
+                showNotification('Ses hatası. Lütfen sayfayı yenileyin.', 'error');
             }
         });
 
@@ -1030,9 +1413,11 @@
 
         // Delete message
         function deleteMessage(messageId, messageOwner) {
-            if (confirm('Delete this message?')) {
-                socket.emit('delete_message', { messageId, messageOwner });
-            }
+            showConfirmModal(
+                '🗑️ Delete Message',
+                'Are you sure you want to delete this message?',
+                () => socket.emit('delete_message', { messageId, messageOwner })
+            );
         }
 
         socket.on('new_message', (data) => {
@@ -1242,21 +1627,10 @@
 
                 } catch (err) {
                     console.error("Mikrofon hatası:", err);
-                    alert("Mikrofon hatası! İzinleri kontrol edin.");
+                    showNotification('Mikrofon hatası! İzinleri kontrol edin.', 'error');
                 }
             });
         }
-
-        // ARAMA CEVAPLAMA
-        peer.on('call', (call) => {
-            call.answer(myStream);
-            const audio = document.createElement('audio');
-            call.on('stream', (userStream) => {
-                addAudioStream(audio, userStream);
-                if (isDeafened) audio.muted = true;
-            });
-            peers[call.peer] = call;
-        });
 
         // YENİ KULLANICI GELDİĞİNDE
         socket.on('user-joined-voice', (data) => {
@@ -1303,6 +1677,289 @@
             });
             document.body.append(audio);
         }
+
+        // --- SCREEN SHARE FUNCTIONALITY ---
+
+        // Start screen sharing
+        async function startScreenShare() {
+            if (!peer || !peer.id || !myStream) {
+                showNotification('You must be in voice chat to share your screen', 'warning');
+                return;
+            }
+
+            try {
+                screenStream = await navigator.mediaDevices.getDisplayMedia({
+                    video: { cursor: 'always' },
+                    audio: false
+                });
+
+                isScreenSharing = true;
+                const btn = document.getElementById('screenshareBtn');
+                btn.classList.add('active');
+                btn.title = 'Stop Sharing';
+
+                // Notify others that we started sharing
+                socket.emit('start-screenshare', {
+                    peerId: peer.id,
+                    username: currentUsername
+                });
+
+                // Handle when user stops sharing via browser UI
+                screenStream.getVideoTracks()[0].onended = () => {
+                    stopScreenShare();
+                };
+
+                showNotification('Screen sharing started', 'success');
+            } catch (err) {
+                console.error('Screen share error:', err);
+                if (err.name !== 'NotAllowedError') {
+                    showNotification('Failed to start screen share', 'error');
+                }
+            }
+        }
+
+        // When sharer receives list of voice users, call each one with screen stream
+        socket.on('voice-users-for-screenshare', (data) => {
+            if (!isScreenSharing || !screenStream) return;
+            console.log('Broadcasting screen share to voice users:', data.peerIds);
+
+            data.peerIds.forEach(viewerPeerId => {
+                if (viewerPeerId === peer.id) return; // Don't call ourselves
+
+                console.log('Calling viewer:', viewerPeerId);
+                const call = peer.call(viewerPeerId, screenStream, {
+                    metadata: { type: 'screenshare-broadcast' }
+                });
+                if (call) {
+                    screenSharePeers[viewerPeerId] = call;
+                }
+            });
+        });
+
+        // When a new viewer joins voice while we're screen sharing, call them
+        socket.on('new-viewer-for-screenshare', (data) => {
+            if (!isScreenSharing || !screenStream) return;
+            console.log('New viewer joined, sending screen share:', data.viewerPeerId);
+
+            const call = peer.call(data.viewerPeerId, screenStream, {
+                metadata: { type: 'screenshare-broadcast' }
+            });
+            if (call) {
+                screenSharePeers[data.viewerPeerId] = call;
+            }
+        });
+
+        // Stop screen sharing
+        function stopScreenShare() {
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+                screenStream = null;
+            }
+
+            isScreenSharing = false;
+            const btn = document.getElementById('screenshareBtn');
+            btn.classList.remove('active');
+            btn.title = 'Share Screen';
+
+            // Close all screen share peer connections
+            Object.values(screenSharePeers).forEach(call => call.close());
+            Object.keys(screenSharePeers).forEach(key => delete screenSharePeers[key]);
+
+            socket.emit('stop-screenshare', { username: currentUsername });
+            showNotification('Screen sharing stopped', 'info');
+        }
+
+        // Screen share button click handler
+        document.getElementById('screenshareBtn').addEventListener('click', () => {
+            if (isScreenSharing) {
+                stopScreenShare();
+            } else {
+                startScreenShare();
+            }
+        });
+
+        // Close screen share viewer
+        document.getElementById('screenshareCloseBtn').addEventListener('click', () => {
+            document.getElementById('screenshareViewer').classList.remove('show');
+        });
+
+        // --- SCREEN SHARE SOCKET HANDLERS ---
+
+        // Store sharer's peerId for Watch button
+        let currentSharerPeerId = null;
+
+        // Someone started screen sharing - show indicator (they will call us with the stream)
+        socket.on('user-started-screenshare', (data) => {
+            if (data.username === currentUsername) return; // Don't watch our own share
+
+            currentScreenSharer = data.username;
+            currentSharerPeerId = data.peerId;
+
+            // Update and show the status indicator
+            document.getElementById('screenshareStatusText').textContent = `${data.username} is sharing`;
+            document.getElementById('screenshareStatus').classList.add('show');
+            document.getElementById('sharingUsername').textContent = data.username;
+
+            showNotification(`${data.username} started sharing their screen`, 'info');
+            // Note: The sharer will call us with the stream, we just wait
+        });
+
+        // Someone stopped screen sharing - hide indicator
+        socket.on('user-stopped-screenshare', (data) => {
+            if (data.username === currentScreenSharer) {
+                currentScreenSharer = null;
+                currentSharerPeerId = null;
+
+                // Hide the status indicator
+                document.getElementById('screenshareStatus').classList.remove('show');
+                document.getElementById('screenshareViewer').classList.remove('show');
+                document.getElementById('screenshareVideo').srcObject = null;
+
+                showNotification(`${data.username} stopped sharing their screen`, 'info');
+            }
+        });
+
+        // When joining voice, receive current screen share status
+        socket.on('current-screenshare', (data) => {
+            currentScreenSharer = data.username;
+            currentSharerPeerId = data.peerId;
+            document.getElementById('screenshareStatusText').textContent = `${data.username} is sharing`;
+            document.getElementById('screenshareStatus').classList.add('show');
+            document.getElementById('sharingUsername').textContent = data.username;
+
+            // Don't auto-connect - user must click "Watch Stream" button to view
+            showNotification(`${data.username} is currently sharing their screen. Click "Watch Stream" to view.`, 'info');
+        });
+
+        // Connect to screen share stream
+        function connectToScreenShare(peerId) {
+            console.log('connectToScreenShare called', { peer: !!peer, peerId, myStream: !!myStream });
+            if (!peer || !myStream) {
+                console.log('Cannot connect: missing peer or myStream');
+                return;
+            }
+
+            // Mark this as a screen share request so the receiver knows
+            pendingScreenShareRequests.add(peer.id);
+
+            // Emit a socket event to tell the sharer to expect our request
+            socket.emit('screenshare-request', {
+                requesterPeerId: peer.id,
+                sharerPeerId: peerId
+            });
+
+            const call = peer.call(peerId, myStream, {
+                metadata: { type: 'screenshare-request' }
+            });
+
+            if (!call) {
+                console.error('Failed to create call');
+                showNotification('Failed to connect to screen share', 'error');
+                return;
+            }
+
+            console.log('Call initiated to', peerId);
+
+            call.on('stream', (remoteStream) => {
+                console.log('Received screen share stream!', remoteStream);
+                console.log('Stream tracks:', remoteStream.getTracks());
+
+                const video = document.getElementById('screenshareVideo');
+                video.srcObject = remoteStream;
+
+                video.onloadedmetadata = () => {
+                    console.log('Video metadata loaded, playing...');
+                    video.play().catch(err => console.error('Video play failed:', err));
+                };
+
+                document.getElementById('screenshareViewer').classList.add('show');
+                showNotification('Connected to screen share', 'success');
+            });
+
+            call.on('error', (err) => {
+                console.error('Screen share call error:', err);
+                showNotification('Failed to connect to screen share', 'error');
+            });
+
+            call.on('close', () => {
+                console.log('Screen share call closed');
+            });
+
+            screenSharePeers[peerId] = call;
+        }
+
+        // Watch button click handler
+        document.getElementById('watchScreenBtn').addEventListener('click', () => {
+            console.log('Watch button clicked', { myStream: !!myStream, currentSharerPeerId, currentScreenSharer });
+
+            if (!myStream) {
+                showNotification('Join voice chat first to watch screen shares', 'warning');
+                return;
+            }
+
+            // If we have a video stream, just show the viewer
+            const video = document.getElementById('screenshareVideo');
+            if (video.srcObject) {
+                console.log('Video already has stream, showing viewer');
+                document.getElementById('screenshareViewer').classList.add('show');
+            } else if (currentSharerPeerId) {
+                // Try to connect to the stream and show viewer
+                console.log('Connecting to screen share:', currentSharerPeerId);
+                showNotification('Connecting to screen share...', 'info');
+                connectToScreenShare(currentSharerPeerId);
+            } else {
+                console.log('No sharer peerId available');
+                showNotification('Screen share is not available. Try refreshing.', 'error');
+            }
+        });
+
+        // Track incoming screen share requests via socket
+        const incomingScreenShareRequests = new Set();
+        socket.on('screenshare-request-notify', (data) => {
+            console.log('Received screen share request notification from:', data.requesterPeerId);
+            incomingScreenShareRequests.add(data.requesterPeerId);
+        });
+
+        // Handle incoming calls - check if it's a screen share broadcast
+        peer.on('call', (call) => {
+            const isScreenShareBroadcast = call.metadata && call.metadata.type === 'screenshare-broadcast';
+
+            console.log('Incoming call received', {
+                from: call.peer,
+                metadata: call.metadata,
+                isScreenShareBroadcast
+            });
+
+            if (isScreenShareBroadcast) {
+                // This is a screen share broadcast from the sharer - accept it but don't auto-show
+                console.log('Receiving screen share broadcast');
+                call.answer(); // Answer without sending video back
+
+                call.on('stream', (remoteStream) => {
+                    console.log('Received screen share stream from broadcast!');
+                    const video = document.getElementById('screenshareVideo');
+                    video.srcObject = remoteStream;
+                    video.onloadedmetadata = () => {
+                        video.play().catch(err => console.error('Video play failed:', err));
+                    };
+                    // Don't auto-show the viewer - user must click "Watch Stream" button
+                    // The stream is ready and stored, just show notification
+                    showNotification('Screen share available. Click "Watch Stream" to view.', 'info');
+                });
+
+                screenSharePeers[call.peer] = call;
+            } else {
+                // Regular voice call
+                console.log('Answering with audio stream (voice call)');
+                call.answer(myStream);
+                const audio = document.createElement('audio');
+                call.on('stream', (userStream) => {
+                    addAudioStream(audio, userStream);
+                    if (isDeafened) audio.muted = true;
+                });
+                peers[call.peer] = call;
+            }
+        });
     </script>
 </body>
 

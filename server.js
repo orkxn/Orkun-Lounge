@@ -112,9 +112,10 @@ function broadcastUserList() {
 }
 
 let activeUsers = {};
-let voiceUsers = new Set();
+let voiceUsers = new Map(); // Map username -> peerId
 let userStatus = {};  // Track user status (online, idle, dnd, invisible)
 let typingUsers = {}; // Track who is typing
+let screenShareUser = null; // Track who is screen sharing { username, peerId }
 
 io.on('connection', (socket) => {
 
@@ -278,14 +279,28 @@ io.on('connection', (socket) => {
 
     // -- SESLİ SOHBET OLAYLARI --
     socket.on('join-voice', (data) => {
-        voiceUsers.add(data.username);
+        voiceUsers.set(data.username, data.peerId); // Store username -> peerId
         socket.broadcast.emit('user-joined-voice', data);
-        console.log(`${data.username} joined Voice Channel`);
+        console.log(`${data.username} joined Voice Channel with peerId: ${data.peerId}`);
 
         socket.broadcast.emit('user-voice-status', {
             username: data.username,
             inVoice: true
         });
+
+        // Send current screen share status to the joining user
+        if (screenShareUser && screenShareUser.username !== data.username) {
+            socket.emit('current-screenshare', {
+                username: screenShareUser.username,
+                peerId: screenShareUser.peerId
+            });
+
+            // Also tell the sharer to send their stream to this new user
+            socket.broadcast.emit('new-viewer-for-screenshare', {
+                viewerPeerId: data.peerId,
+                viewerUsername: data.username
+            });
+        }
     });
 
     socket.on('disconnect', () => {
@@ -305,6 +320,14 @@ io.on('connection', (socket) => {
                 inVoice: false
             });
 
+            // Stop screen share if disconnecting user was sharing
+            if (screenShareUser && screenShareUser.username === username) {
+                screenShareUser = null;
+                socket.broadcast.emit('user-stopped-screenshare', {
+                    username: username
+                });
+            }
+
             console.log(`${username} left (Disconnected)`);
             delete activeUsers[socket.id];
 
@@ -317,6 +340,65 @@ io.on('connection', (socket) => {
         socket.broadcast.emit('user-voice-status', {
             username: data.username,
             inVoice: false
+        });
+
+        // Stop screen share if the leaving user was sharing
+        if (screenShareUser && screenShareUser.username === data.username) {
+            screenShareUser = null;
+            socket.broadcast.emit('user-stopped-screenshare', {
+                username: data.username
+            });
+        }
+    });
+
+    // --- SCREEN SHARE EVENTS ---
+    socket.on('start-screenshare', (data) => {
+        const username = activeUsers[socket.id];
+        if (!username || !voiceUsers.has(username)) return;
+
+        // Only one person can share at a time
+        if (screenShareUser && screenShareUser.username !== username) {
+            socket.emit('screenshare-denied', { reason: 'Someone else is already sharing' });
+            return;
+        }
+
+        screenShareUser = { username: username, peerId: data.peerId };
+
+        // Send list of voice user peerIds to the sharer so they can broadcast
+        const otherVoiceUserPeerIds = [];
+        voiceUsers.forEach((peerId, voiceUsername) => {
+            if (voiceUsername !== username) {
+                otherVoiceUserPeerIds.push(peerId);
+            }
+        });
+
+        socket.emit('voice-users-for-screenshare', {
+            peerIds: otherVoiceUserPeerIds
+        });
+
+        socket.broadcast.emit('user-started-screenshare', {
+            peerId: data.peerId,
+            username: username
+        });
+        console.log(`${username} started screen sharing, broadcasting to ${otherVoiceUserPeerIds.length} users`);
+    });
+
+    socket.on('stop-screenshare', (data) => {
+        const username = activeUsers[socket.id];
+        if (screenShareUser && screenShareUser.username === username) {
+            screenShareUser = null;
+            socket.broadcast.emit('user-stopped-screenshare', {
+                username: username
+            });
+            console.log(`${username} stopped screen sharing`);
+        }
+    });
+
+    // Forward screen share request to the sharer (workaround for PeerJS metadata issue)
+    socket.on('screenshare-request', (data) => {
+        socket.broadcast.emit('screenshare-request-notify', {
+            requesterPeerId: data.requesterPeerId,
+            sharerPeerId: data.sharerPeerId
         });
     });
 });
